@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <title>Gemeinsame Zeit verschenken</title>
+  <rect width="1200" height="900" fill="#351c45"/>
+  <rect x="160" y="250" width="880" height="440" rx="24" fill="#f5e9e4" transform="rotate(-8 600 470)"/>
+  <rect x="160" y="250" width="880" height="440" rx="24" fill="#ff685e" transform="rotate(7 600 470)"/>
+  <path d="M160 470h880M600 250v440" stroke="#351c45" stroke-width="32" transform="rotate(7 600 470)"/>
+  <circle cx="600" cy="470" r="102" fill="#351c45"/>
+  <path d="M560 470h80m-40-40v80" stroke="#f5e9e4" stroke-width="18" stroke-linecap="round"/>
+</svg>

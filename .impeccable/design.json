@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T21:50:16.737898+00:00",
+  "title": "Design System: Shopvento storefront",
+  "extensions": {
+    "colorMeta": {
+      "coral": {
+        "role": "primary",
+        "displayName": "Coral",
+        "tonalRamp": [
+          "oklch(15% 0.1862 26.69)",
+          "oklch(26% 0.1862 26.69)",
+          "oklch(38% 0.1862 26.69)",
+          "oklch(49% 0.1862 26.69)",
+          "oklch(61% 0.1862 26.69)",
+          "oklch(72% 0.1862 26.69)",
+          "oklch(84% 0.1862 26.69)",
+          "oklch(95% 0.1862 26.69)"
+        ]
+      },
+      "coral-hover": {
+        "role": "primary",
+        "displayName": "Coral hover",
+        "tonalRamp": [
+          "oklch(15% 0.1549 25.67)",
+          "oklch(26% 0.1549 25.67)",
+          "oklch(38% 0.1549 25.67)",
+          "oklch(49% 0.1549 25.67)",
+          "oklch(61% 0.1549 25.67)",
+          "oklch(72% 0.1549 25.67)",
+          "oklch(84% 0.1549 25.67)",
+          "oklch(95% 0.1549 25.67)"
+        ]
+      },
+      "aubergine": {
+        "role": "secondary",
+        "displayName": "Aubergine",
+        "tonalRamp": [
+          "oklch(15% 0.0776 310.49)",
+          "oklch(26% 0.0776 310.49)",
+          "oklch(38% 0.0776 310.49)",
+          "oklch(49% 0.0776 310.49)",
+          "oklch(61% 0.0776 310.49)",
+          "oklch(72% 0.0776 310.49)",
+          "oklch(84% 0.0776 310.49)",
+          "oklch(95% 0.0776 310.49)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0423 318.83)",
+          "oklch(26% 0.0423 318.83)",
+          "oklch(38% 0.0423 318.83)",
+          "oklch(49% 0.0423 318.83)",
+          "oklch(61% 0.0423 318.83)",
+          "oklch(72% 0.0423 318.83)",
+          "oklch(84% 0.0423 318.83)",
+          "oklch(95% 0.0423 318.83)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "tonalRamp": [
+          "oklch(15% 0.0147 44.18)",
+          "oklch(26% 0.0147 44.18)",
+          "oklch(38% 0.0147 44.18)",
+          "oklch(49% 0.0147 44.18)",
+          "oklch(61% 0.0147 44.18)",
+          "oklch(72% 0.0147 44.18)",
+          "oklch(84% 0.0147 44.18)",
+          "oklch(95% 0.0147 44.18)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0084 56.32)",
+          "oklch(26% 0.0084 56.32)",
+          "oklch(38% 0.0084 56.32)",
+          "oklch(49% 0.0084 56.32)",
+          "oklch(61% 0.0084 56.32)",
+          "oklch(72% 0.0084 56.32)",
+          "oklch(84% 0.0084 56.32)",
+          "oklch(95% 0.0084 56.32)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(15% 0.0259 39.34)",
+          "oklch(26% 0.0259 39.34)",
+          "oklch(38% 0.0259 39.34)",
+          "oklch(49% 0.0259 39.34)",
+          "oklch(61% 0.0259 39.34)",
+          "oklch(72% 0.0259 39.34)",
+          "oklch(84% 0.0259 39.34)",
+          "oklch(95% 0.0259 39.34)"
+        ]
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "Soft",
+        "tonalRamp": [
+          "oklch(15% 0.0303 27.75)",
+          "oklch(26% 0.0303 27.75)",
+          "oklch(38% 0.0303 27.75)",
+          "oklch(49% 0.0303 27.75)",
+          "oklch(61% 0.0303 27.75)",
+          "oklch(72% 0.0303 27.75)",
+          "oklch(84% 0.0303 27.75)",
+          "oklch(95% 0.0303 27.75)"
+        ]
+      }
+    },
+    "breakpoints": [
+      {
+        "name": "host-stack",
+        "value": "800px"
+      }
+    ],
+    "typographyMeta": {
+      "welcome": {
+        "displayName": "Home welcome",
+        "purpose": "Compact welcome heading above the primary discovery action."
+      },
+      "welcome-mobile": {
+        "displayName": "Mobile welcome",
+        "purpose": "Welcome scale at the host stacking breakpoint."
+      },
+      "intro-mobile": {
+        "displayName": "Mobile introductory copy",
+        "purpose": "Shared 19px size for welcome and page introduction copy on small screens."
+      },
+      "note": {
+        "displayName": "Supporting note",
+        "purpose": "Home note and footer navigation share this established size."
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Default host action; booking uses the same contrast roles.",
+      "html": "<button class=\"ds-primary\">Continue</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:54px;padding:14px 22px;border:0;border-radius:8px;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:18px;font-weight:600;line-height:1.3;text-decoration:none;cursor:pointer;background:var(--sv-primary,#351c45);color:var(--sv-on-primary,#fff9f5)}.ds-primary:hover{background:var(--sv-primary-hover,#6b5970)}.ds-primary:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Coral button",
+      "kind": "button",
+      "description": "Prominent discovery and gifting invitation.",
+      "html": "<a class=\"ds-coral\" href=\"#programme\">Find an experience <span aria-hidden=\"true\">↗</span></a>",
+      "css": ".ds-coral{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:54px;padding:14px 22px;border:0;border-radius:8px;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:18px;font-weight:600;line-height:1.3;text-decoration:none;cursor:pointer;background:var(--coral,#ff685e);color:var(--ink,#351c45)}.ds-coral:hover{background:var(--coral-hover,#ff8178)}.ds-coral:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}",
+      "refersTo": "button-coral"
+    },
+    {
+      "name": "Text action",
+      "kind": "button",
+      "description": "Underlined host action with a quiet directional arrow.",
+      "html": "<a class=\"ds-text\" href=\"#programme\">Discover all dates <span aria-hidden=\"true\">→</span></a>",
+      "css": ".ds-text{display:inline-flex;align-items:center;gap:18px;padding-block:8px;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:18px;font-weight:600;color:var(--sv-text,#351c45);text-decoration:underline;text-underline-offset:4px}.ds-text:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}"
+    },
+    {
+      "name": "Account field",
+      "kind": "input",
+      "description": "Published account field styled through host semantic roles.",
+      "html": "<label class=\"ds-label\" for=\"ds-email\">Email</label><input class=\"ds-input\" id=\"ds-email\" type=\"email\" autocomplete=\"email\" placeholder=\"you@example.com\">",
+      "css": ".ds-label{display:block;margin-bottom:.4rem;font-family:var(--sv-font-label,\"Source Sans 3\",sans-serif);font-size:14px;color:var(--sv-text,#351c45)}.ds-input{display:block;width:100%;min-width:0;min-height:48px;padding:.65rem .75rem;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:18px;color:var(--sv-text,#351c45);background:var(--sv-background,#f5e9e4);border:1px solid var(--sv-border,#d2bdb6);border-radius:8px}.ds-input[aria-invalid=\"true\"]{border-color:var(--sv-error,#a51d32)}.ds-input:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}"
+    },
+    {
+      "name": "Main navigation",
+      "kind": "nav",
+      "description": "Plain navigation with a clear current-page underline.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><a href=\"#events\" aria-current=\"page\">Experiences</a><a href=\"#vouchers\">Vouchers</a><a href=\"#shop\">Shop</a></nav>",
+      "css": ".ds-nav{display:flex;flex-wrap:wrap;gap:28px;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:18px;color:var(--sv-text,#351c45)}.ds-nav a{color:inherit;text-decoration:none;text-underline-offset:4px}.ds-nav a:hover,.ds-nav a[aria-current=\"page\"]{text-decoration:underline;text-decoration-thickness:2px}.ds-nav a:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}@media(max-width:800px){.ds-nav{width:100%;justify-content:space-between;gap:16px;font-size:17px}}"
+    },
+    {
+      "name": "Catalogue filter",
+      "kind": "chip",
+      "description": "Published pill filter; selected state inverts its semantic colors.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"false\">Products</button> <button class=\"ds-chip\" aria-pressed=\"true\">Vouchers</button>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:1px solid var(--sv-border,#d2bdb6);background:var(--sv-surface,#fff9f5);border-radius:999px;cursor:pointer;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:.95rem;color:var(--sv-text-2,#6b5970)}.ds-chip[aria-pressed=\"true\"]{background:var(--sv-text,#351c45);color:var(--sv-background,#f5e9e4);border-color:var(--sv-text,#351c45)}.ds-chip:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}"
+    },
+    {
+      "name": "Gift panel",
+      "kind": "card",
+      "description": "Signature dark invitation panel with coral emphasis.",
+      "html": "<section class=\"ds-gift\"><p>The best things are experienced <em>together.</em></p><a class=\"ds-gift-link\" href=\"#vouchers\">Explore vouchers</a></section>",
+      "css": ".ds-gift{background:var(--sv-primary,#351c45);color:var(--sv-on-primary,#fff9f5);padding:42px;border-radius:14px}.ds-gift p{font-family:var(--sv-font-display,\"Bricolage Grotesque\",sans-serif);font-size:clamp(2rem,3.2vw,3rem);font-weight:600;line-height:1.12;margin:0 0 32px}.ds-gift em{color:var(--coral,#ff685e);font-style:normal}.ds-gift-link{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:54px;padding:14px 22px;border:0;border-radius:8px;font-family:var(--sv-font,\"Source Sans 3\",sans-serif);font-size:18px;font-weight:600;line-height:1.3;text-decoration:none;cursor:pointer;background:var(--coral,#ff685e);color:var(--ink,#351c45)}.ds-gift-link:hover{background:var(--coral,#ff685e)}.ds-gift-link:focus-visible{outline:3px solid var(--sv-focus,#351c45);outline-offset:4px}@media(max-width:800px){.ds-gift{padding:30px}}",
+      "refersTo": "gift-panel"
+    }
+  ],
+  "narrative": {
+    "northStar": "Shared time starts with a real upcoming date.",
+    "overview": "A warm, light programme for the fictional Nebenan Atelier. Large, conversational headings sit beside useful dates; restrained borders and generous space let the next guest action lead. Shopvento's coral, aubergine and font pairing are binding defaults.",
+    "keyCharacteristics": [
+      "Open programme rows and clear date hierarchy.",
+      "Warm pale surfaces, dark aubergine type and selective coral emphasis.",
+      "Quiet controls and rounded containers shared across discovery and commerce."
+    ],
+    "rules": [
+      {
+        "name": "The Action Contrast Rule",
+        "body": "Coral buttons use aubergine text. Aubergine buttons use the pale on-primary token. Preserve both sides of these pairings when applying runtime branding.",
+        "section": "colors"
+      },
+      {
+        "name": "The Shared Scope Rule",
+        "body": "The published package owns commerce components and behavior. Extend the host's semantic variables and narrow presentation scopes to keep booking, account, shop and forms in this same visual world.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** keep real dates and the next guest action easy to scan.",
+      "**Do** use semantic branding roles across host and package surfaces.",
+      "**Do** preserve the light palette, established font pairing and restrained corner hierarchy."
+    ],
+    "donts": [
+      "**Don't** introduce a second visual system inside commerce flows.",
+      "**Don't** replace useful programme rows with decorative content or unsupported imagery.",
+      "**Don't** remove keyboard focus, validation text or readable action contrast."
+    ]
+  }
+}

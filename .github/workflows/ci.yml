@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run build
+      - run: bun run test:unit
+      - run: bun run test:worker
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test
+      - run: bun run brandcheck
+      - name: Upload browser failure details
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
