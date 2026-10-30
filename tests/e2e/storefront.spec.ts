@@ -7,23 +7,33 @@ test.beforeEach(async ({ page }) => {
 
 test("home loads upcoming events from the API", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByText("Kräuterwerkstatt").first()).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Good times.New discoveries.",
+  );
   await expect(
-    page.getByRole("button", { name: /Kräuterwerkstatt/ }).first(),
+    page.getByRole("navigation", { name: "Main navigation" }),
+  ).toContainText("Experiences");
+  await expect(page.getByText("€49.00").first()).toBeVisible();
+  await expect(
+    page.locator('meta[property="og:locale"]').first(),
+  ).toHaveAttribute("content", "en_GB");
+  await expect(page.getByText("Herb workshop").first()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Herb workshop/ }).first(),
   ).toBeVisible();
 });
 
 test("event booking starts in the package form", async ({ page }) => {
   await page.goto("/events?event=1");
   await expect(page.locator(".sv-booking")).toBeVisible();
-  await expect(page.getByText("Kräuterwerkstatt").first()).toBeVisible();
+  await expect(page.getByText("Herb workshop").first()).toBeVisible();
   await expect(page.locator(".sv-booking select").first()).toBeVisible();
 });
 
 test("vouchers use the package catalogue", async ({ page }) => {
   await page.goto("/gutscheine");
-  await expect(page.getByText("Zeit verschenken").first()).toBeVisible();
+  await expect(page.getByText("Give time together").first()).toBeVisible();
   await expect(page.locator('a[href*="zeit-gutschein"]').first()).toBeVisible();
 });
 
@@ -42,26 +52,27 @@ test("product, cart and checkout stay in the package flow", async ({
   await page.goto("/shop");
   await page.locator('a[href*="/shop/produkte/kraeuter-set"]').first().click();
   await expect(
-    page.getByRole("heading", { name: "Kräuter-Set", exact: true }),
+    page.getByRole("heading", { name: "Herb kit", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: /In den (Warenkorb|Korb)/i })
+    .getByRole("button", { name: /Add to (cart|basket)/i })
     .first()
     .click();
   await page.goto("/warenkorb");
-  await expect(page.getByText("Kräuter-Set").first()).toBeVisible();
+  await expect(page.getByText("Herb kit").first()).toBeVisible();
   await page
-    .getByRole("button", { name: /Zur Kasse/i })
+    .getByRole("button", { name: /Checkout/i })
     .first()
     .click();
   await expect(page).toHaveURL(/\/kasse\/?$/);
   await page.getByRole("button", { name: "Als Gast fortfahren" }).click();
-  await expect(page.getByLabel(/E-Mail/i).first()).toBeVisible();
+  await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
 });
 
+// Account authentication and compact booking copy are fixed German in @shopvento/ui 0.3.0.
 test("customer account opens the package login", async ({ page }) => {
   await page.goto("/konto");
-  await expect(page.getByLabel(/E-Mail/i).first()).toBeVisible();
+  await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
   await expect(page.getByLabel("Passwort", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Anmelden/i }).first(),
@@ -70,11 +81,11 @@ test("customer account opens the package login", async ({ page }) => {
 
 test("instance branding overrides the starter at runtime", async ({ page }) => {
   await page.route("**/api/shop/branding", (route) =>
-    route.fulfill({ json: { ...branding, brand_name: "Raum für Ideen" } }),
+    route.fulfill({ json: { ...branding, brand_name: "Room for ideas" } }),
   );
   await page.goto("/");
-  await expect(page.getByText("Raum für Ideen").first()).toBeVisible();
-  await expect(page).toHaveTitle(/Raum für Ideen/);
+  await expect(page.getByText("Room for ideas").first()).toBeVisible();
+  await expect(page).toHaveTitle(/Room for ideas/);
   await expect(
     page.locator('head link[rel="canonical"]').first(),
   ).toHaveAttribute("href", "http://localhost:3100/");
@@ -105,7 +116,7 @@ test("account registration and password recovery use package forms", async ({
   await expect(page.getByLabel(/Vorname/i)).toBeVisible();
   await expect(page.getByLabel(/Nachname/i)).toBeVisible();
   await page.goto("/konto/passwort-vergessen");
-  await expect(page.getByLabel(/E-Mail/i).first()).toBeVisible();
+  await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Link|Passwort/i }).first(),
   ).toBeVisible();
@@ -126,7 +137,7 @@ test("email confirmation keeps one-time capabilities out of the address bar", as
 
 test("an unauthenticated account deep link opens sign-in", async ({ page }) => {
   await page.goto("/konto/gutscheine");
-  await expect(page.getByLabel(/E-Mail/i).first()).toBeVisible();
+  await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
   await expect(page.getByLabel("Passwort", { exact: true })).toBeVisible();
 });
 
@@ -143,5 +154,49 @@ test("authenticated account uses package details and valid contact navigation", 
   await page.goto("/konto/buchungen/o-order-demo");
   await expect(page.getByText("DEMO-1").first()).toBeVisible();
   await page.goto("/konto/buchungen/t-booking-demo");
-  await expect(page.getByText("Kräuterwerkstatt").first()).toBeVisible();
+  await expect(page.getByText("Herb workshop").first()).toBeVisible();
+});
+
+test("newsletter, reservation and legal copy are English", async ({ page }) => {
+  await page.goto("/newsletter");
+  await expect(
+    page.getByRole("heading", { name: "News from the atelier" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Subscribe to the newsletter" }),
+  ).toBeVisible();
+  await page.goto("/reservierung");
+  await expect(page.getByLabel("Name *", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reserve now" })).toBeVisible();
+  await page.goto("/impressum");
+  await expect(
+    page.getByRole("heading", { name: "Legal notice" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Demo placeholder", { exact: true }),
+  ).toBeVisible();
+});
+
+test("empty cart uses the English package catalogue", async ({ page }) => {
+  await page.goto("/warenkorb");
+  await expect(
+    page.getByText("Your cart is empty.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Browse the shop", exact: true }).first(),
+  ).toBeVisible();
+});
+
+test("event loading errors use English host copy", async ({ page }) => {
+  await page.route(
+    (url) => url.pathname.replace(/\/$/, "") === "/api/shop/tastings",
+    (route) => route.fulfill({ status: 503, json: {} }),
+  );
+  await page.goto("/events");
+  await expect(
+    page.getByText("Dates are currently unavailable. Please try again."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Reload dates" }),
+  ).toBeVisible();
 });

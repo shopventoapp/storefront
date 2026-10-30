@@ -23,7 +23,7 @@ try {
         name: "home",
         path: "/",
         ready: () =>
-          page.getByRole("button", { name: /Kräuterwerkstatt/ }).first(),
+          page.getByRole("button", { name: /Herb workshop/ }).first(),
       },
       {
         name: "event",
@@ -43,11 +43,11 @@ try {
     }
     await page.goto(`${baseURL}/shop/produkte/kraeuter-set`);
     await page
-      .getByRole("button", { name: /In den (Warenkorb|Korb)/i })
+      .getByRole("button", { name: /Add to (cart|basket)/i })
       .first()
       .click();
     await page.goto(`${baseURL}/warenkorb`);
-    await expect(page.getByText("Kräuter-Set").first()).toBeVisible();
+    await expect(page.getByText("Herb kit").first()).toBeVisible();
     await capture("cart");
     await page.close();
 

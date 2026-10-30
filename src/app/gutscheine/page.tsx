@@ -4,15 +4,15 @@ export default function Page() {
   return (
     <>
       <div className="wrap page-intro">
-        <h1>Zeit verschenken</h1>
+        <h1>Give time together</h1>
         <p>
-          Ein Gutschein lässt Raum für Vorfreude. Den passenden Moment sucht
-          sich die beschenkte Person selbst aus.
+          A voucher gives something to look forward to. The recipient chooses
+          the moment that suits them.
         </p>
       </div>
       <div className="wrap page-content">
         <a className="button" href="/shop/gutscheine">
-          Gutscheine entdecken
+          Explore vouchers
         </a>
       </div>
     </>

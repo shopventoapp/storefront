@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "Gute Zeit. Neue Entdeckungen.";
+export const alt = "Good times. New discoveries.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const dynamic = "force-static";
@@ -29,7 +29,7 @@ export default async function Image() {
       }}
     >
       <div style={{ fontSize: 32, display: "flex" }}>
-        Gemeinsam etwas Neues entdecken.
+        Discover something new together.
       </div>
       <div
         style={{
@@ -40,8 +40,8 @@ export default async function Image() {
           flexDirection: "column",
         }}
       >
-        <span>Gute Zeit.</span>
-        <span>Neue Entdeckungen.</span>
+        <span>Good times.</span>
+        <span>New discoveries.</span>
       </div>
       <div
         style={{
@@ -53,7 +53,7 @@ export default async function Image() {
           borderRadius: "14px",
         }}
       >
-        Workshops · Verkostungen · Touren
+        Workshops · Tastings · Tours
       </div>
     </div>,
     {

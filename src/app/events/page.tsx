@@ -4,9 +4,7 @@ import { pageMetadata } from "@/lib/metadata";
 export const metadata = pageMetadata("/events");
 export default function Page() {
   return (
-    <Suspense
-      fallback={<p className="wrap state">Erlebnisse werden geladen …</p>}
-    >
+    <Suspense fallback={<p className="wrap state">Loading experiences …</p>}>
       <EventsPage />
     </Suspense>
   );

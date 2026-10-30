@@ -10,24 +10,24 @@ export default function Home() {
         <div className="wrap programme-grid">
           <div className="welcome">
             <h1>
-              Gute Zeit.
+              Good times.
               <br />
-              Neue <em>Entdeckungen.</em>
+              New <em>discoveries.</em>
             </h1>
             <p>
-              Mit den Händen arbeiten, gemeinsam probieren und den Alltag kurz
-              vor der Tür lassen. Entdecke Dein nächstes Erlebnis bei uns.
+              Make something by hand, taste together and leave the everyday at
+              the door. Discover your next experience with us.
             </p>
             <a className="button button-coral" href="/events">
-              Dein Erlebnis finden <span aria-hidden="true">↗</span>
+              Find your experience <span aria-hidden="true">↗</span>
             </a>
-            <p className="small-note">Workshops · Verkostungen · Touren</p>
+            <p className="small-note">Workshops · Tastings · Tours</p>
           </div>
           <div className="programme">
-            <h2>Demnächst im Atelier</h2>
+            <h2>Coming up at the atelier</h2>
             <UpcomingEvents compact />
             <a className="text-link" href="/events">
-              Alle Termine entdecken <span aria-hidden="true">→</span>
+              Explore all dates <span aria-hidden="true">→</span>
             </a>
           </div>
         </div>
@@ -35,37 +35,37 @@ export default function Home() {
       <section className="wrap discover">
         <div>
           <h2>
-            Etwas Schönes
+            Something lovely
             <br />
-            weitergeben.
+            to pass on.
           </h2>
           <p>
-            Für jemanden, der gern Neues ausprobiert. Oder für die nächste
-            gemeinsame Auszeit.
+            For someone who loves trying new things. Or for your next escape
+            together.
           </p>
           <a className="text-link" href="/gutscheine">
-            Zeit verschenken <span aria-hidden="true">→</span>
+            Give time together <span aria-hidden="true">→</span>
           </a>
         </div>
         <div className="gift-panel">
           <p>
-            Die besten Dinge
+            The best things
             <br />
-            erlebt man <em>zusammen.</em>
+            are enjoyed <em>together.</em>
           </p>
           <a className="button" href="/gutscheine">
-            Zu den Gutscheinen
+            Explore vouchers
           </a>
         </div>
       </section>
       <section className="wrap closing">
-        <h2>Ein bisschen Atelier für zu Hause.</h2>
+        <h2>A little atelier for your home.</h2>
         <p>
-          Im Shop findest Du kleine Entdeckungen, mit denen die Freude nach dem
-          Erlebnis weitergeht.
+          Find little discoveries in our shop to keep the joy going after your
+          experience.
         </p>
         <a className="text-link" href="/shop">
-          Im Shop stöbern <span aria-hidden="true">→</span>
+          Browse the shop <span aria-hidden="true">→</span>
         </a>
       </section>
     </>

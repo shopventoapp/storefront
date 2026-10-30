@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { BrandName, publicHref, useBranding } from "./runtime";
 
 const navigation = [
-  { label: "Erlebnisse", href: "/events" },
-  { label: "Gutscheine", href: "/gutscheine" },
+  { label: "Experiences", href: "/events" },
+  { label: "Vouchers", href: "/gutscheine" },
   { label: "Shop", href: "/shop" },
 ];
 
@@ -21,7 +21,7 @@ export function SiteHeader() {
         <a
           className="wordmark"
           href="/"
-          aria-label={branding.brand_name || "Nebenan Atelier – Startseite"}
+          aria-label={branding.brand_name || "Nebenan Atelier – Home"}
         >
           {branding.logo_url ? (
             <Image
@@ -35,7 +35,7 @@ export function SiteHeader() {
             <BrandName />
           )}
         </a>
-        <nav aria-label="Hauptnavigation" className="main-nav">
+        <nav aria-label="Main navigation" className="main-nav">
           {links.map((link) => (
             <a
               key={link.href}
@@ -49,10 +49,10 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="header-actions">
-          <a href="/konto" className="icon-link" aria-label="Dein Konto">
+          <a href="/konto" className="icon-link" aria-label="Your account">
             <Icon kind="person" />
           </a>
-          <a href="/warenkorb" className="icon-link" aria-label="Warenkorb">
+          <a href="/warenkorb" className="icon-link" aria-label="Cart">
             <Icon kind="bag" />
           </a>
         </div>
@@ -96,34 +96,34 @@ export function SiteFooter() {
           <a className="wordmark" href="/">
             <BrandName />
           </a>
-          <p>Gute Zeit. Neue Ideen. Miteinander.</p>
-          <a href="/newsletter">Post aus dem Atelier</a>
+          <p>Good times. Fresh ideas. Together.</p>
+          <a href="/newsletter">News from the atelier</a>
         </div>
         <div className="footer-links">
-          <nav aria-label="Weitere Angebote">
-            <a href="/reservierung">Reservierung</a>
-            <a href="/konto">Dein Konto</a>
+          <nav aria-label="More to explore">
+            <a href="/reservierung">Reservations</a>
+            <a href="/konto">Your account</a>
             {branding.location_links?.map((link) => (
               <a key={link.href} href={publicHref(link.href, "/reservierung")}>
                 {link.label}
               </a>
             ))}
           </nav>
-          <nav aria-label="Rechtliches">
+          <nav aria-label="Legal">
             <a href={publicHref(branding.imprint_url, "/impressum")}>
-              Impressum
+              Legal notice
             </a>
             <a href={publicHref(branding.privacy_url, "/datenschutz")}>
-              Datenschutz
+              Privacy
             </a>
-            <a href={publicHref(branding.terms_url, "/agb")}>AGB</a>
+            <a href={publicHref(branding.terms_url, "/agb")}>Terms</a>
             <a href={publicHref(branding.withdrawal_url, "/widerruf")}>
-              Widerruf
+              Cancellation rights
             </a>
           </nav>
         </div>
         <p className="demo-note">
-          Fiktives Demo-Atelier · Angebote kommen aus der verbundenen Instanz.
+          Fictional demo atelier · Offers come from the connected installation.
         </p>
       </div>
     </footer>

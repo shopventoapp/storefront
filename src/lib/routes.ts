@@ -3,74 +3,67 @@ export const demoName = "Nebenan Atelier";
 export const publicPages = [
   {
     path: "/",
-    title: "Zeit für neue Entdeckungen",
+    title: "Time for new discoveries",
     description:
-      "Workshops, Verkostungen und kleine Entdeckungstouren. Finde Dein nächstes Erlebnis im Nebenan Atelier.",
+      "Workshops, tastings and little adventures. Find your next experience at Nebenan Atelier.",
   },
   {
     path: "/events",
-    title: "Erlebnisse & Termine",
+    title: "Experiences & dates",
     description:
-      "Entdecke kommende Workshops, Verkostungen und Touren und buche Deinen Platz.",
+      "Explore upcoming workshops, tastings and tours and book your place.",
   },
   {
     path: "/shop/gutscheine",
-    title: "Zeit verschenken",
-    description:
-      "Verschenke gemeinsame Zeit mit einem Gutschein für das Nebenan Atelier.",
+    title: "Give time together",
+    description: "Give time together with a voucher for Nebenan Atelier.",
   },
   {
     path: "/shop",
-    title: "Entdeckungen für zu Hause",
-    description:
-      "Stöbere durch Produkte und Gutscheine aus dem Nebenan Atelier.",
+    title: "Discoveries for your home",
+    description: "Browse products and vouchers from Nebenan Atelier.",
   },
   {
     path: "/reservierung",
-    title: "Deinen Besuch reservieren",
-    description: "Plane Deinen Besuch und frage einen Platz im Atelier an.",
+    title: "Reserve your visit",
+    description: "Plan your visit and request a place at the atelier.",
   },
   {
     path: "/newsletter",
-    title: "Post aus dem Atelier",
-    description:
-      "Erfahre von neuen Terminen und Ideen. Melde Dich für den Newsletter an.",
+    title: "News from the atelier",
+    description: "Discover new dates and ideas. Sign up for our newsletter.",
   },
   {
     path: "/impressum",
-    title: "Impressum – Platzhalter",
-    description:
-      "Dieser rechtliche Musterbereich muss vor Veröffentlichung ersetzt werden.",
+    title: "Legal notice – placeholder",
+    description: "Replace this legal placeholder before publishing.",
   },
   {
     path: "/datenschutz",
-    title: "Datenschutz – Platzhalter",
-    description:
-      "Dieser rechtliche Musterbereich muss vor Veröffentlichung ersetzt werden.",
+    title: "Privacy – placeholder",
+    description: "Replace this legal placeholder before publishing.",
   },
   {
     path: "/agb",
-    title: "AGB – Platzhalter",
-    description:
-      "Dieser rechtliche Musterbereich muss vor Veröffentlichung ersetzt werden.",
+    title: "Terms – placeholder",
+    description: "Replace this legal placeholder before publishing.",
   },
   {
     path: "/widerruf",
-    title: "Widerruf – Platzhalter",
-    description:
-      "Dieser rechtliche Musterbereich muss vor Veröffentlichung ersetzt werden.",
+    title: "Cancellation rights – placeholder",
+    description: "Replace this legal placeholder before publishing.",
   },
 ] as const;
 
 export const privatePages = [
-  { path: "/warenkorb", title: "Dein Warenkorb" },
-  { path: "/kasse", title: "Zur Kasse" },
-  { path: "/kasse/erfolg", title: "Deine Bestellung" },
-  { path: "/kasse/abgebrochen", title: "Zahlung unterbrochen" },
-  { path: "/bestellung", title: "Deine Bestellung" },
-  { path: "/versand", title: "Versand & Abholung" },
-  { path: "/buchung", title: "Deine Buchung" },
-  { path: "/konto", title: "Dein Konto" },
+  { path: "/warenkorb", title: "Your cart" },
+  { path: "/kasse", title: "Checkout" },
+  { path: "/kasse/erfolg", title: "Your order" },
+  { path: "/kasse/abgebrochen", title: "Payment interrupted" },
+  { path: "/bestellung", title: "Your order" },
+  { path: "/versand", title: "Delivery & collection" },
+  { path: "/buchung", title: "Your booking" },
+  { path: "/konto", title: "Your account" },
 ] as const;
 
 export function shellPath(path: string): string {

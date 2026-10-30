@@ -5,7 +5,6 @@ import {
   AccountBookings,
   AccountEventDetail,
   type AccountHelp,
-  type AccountLabels,
   AccountLayout,
   type AccountOrder,
   AccountOrderDetail,
@@ -15,7 +14,6 @@ import {
   AccountState,
   AccountVoucherDetail,
   AccountVouchers,
-  accountErrorMessage,
   createAccountClient,
   createDashboardClient,
   type DashboardProps,
@@ -31,6 +29,7 @@ import {
   useAccountSession,
 } from "@shopvento/ui";
 import { useEffect, useRef, useState } from "react";
+import { englishAccountLabels, englishAccountNotice } from "@/lib/ui-english";
 import {
   bookingClient,
   publicHref,
@@ -53,25 +52,13 @@ const routes: AccountRoutes = {
   reserve: "/reservierung",
   passwordSet: "/konto/passwort-setzen",
 };
-const labels: AccountLabels = {
-  event: "Erlebnis",
-  events: "Erlebnisse",
-  eventVoucher: "Erlebnisgutscheine",
-  eventVoucherSingular: "Erlebnisgutschein",
-  product: "Produkt",
-  products: "Produkte",
-  pickup: "Abholung",
-  voucherUse: "Gutschein einlösen",
-  newsletter: "Neuigkeiten aus dem Atelier",
-};
-
 const formRoutes: Record<string, string> = {
-  registrieren: "Dein neues Konto",
-  "passwort-vergessen": "Passwort vergessen?",
-  "passwort-setzen": "Dein neues Passwort",
-  "email-bestaetigen": "Deine E-Mail bestätigen",
-  "email-aendern": "Deine neue E-Mail bestätigen",
-  anmelden: "Dein Konto",
+  registrieren: "Create your account",
+  "passwort-vergessen": "Forgot your password?",
+  "passwort-setzen": "Your new password",
+  "email-bestaetigen": "Confirm your email",
+  "email-aendern": "Confirm your new email",
+  anmelden: "Your account",
 };
 
 export function AccountPage() {
@@ -95,7 +82,7 @@ export function AccountPage() {
       }
     }
   }, []);
-  if (!path) return <AccountState loading />;
+  if (!path) return <AccountLoading />;
   const kind = path.split("/")[2] ?? "";
   const form = formRoutes[kind];
   if (!form) return <AccountDashboard path={path} />;
@@ -157,20 +144,20 @@ function AccountDashboard({ path }: { path: string }) {
     address: "",
     routeUrl: publicHref(branding.location_links?.[0]?.href, "/reservierung"),
   };
-  if (session.loading) return <AccountState loading />;
+  if (session.loading) return <AccountLoading />;
   if (!session.profile)
     return (
       <section className="account-page">
-        <h1>Schön, dass Du da bist.</h1>
-        <p>Hier findest Du Deine Buchungen, Bestellungen und Gutscheine.</p>
-        <SignIn notice={session.error ?? undefined} />
+        <h1>Good to see you.</h1>
+        <p>Find your bookings, orders and vouchers here.</p>
+        <SignIn notice={session.error ? englishAccountNotice : undefined} />
       </section>
     );
   const props: DashboardProps = {
     client: dashboard,
     profile: session.profile,
     routes,
-    labels,
+    labels: englishAccountLabels,
     help,
   };
   const section = path.split("/")[2] ?? "";
@@ -188,8 +175,8 @@ function AccountDashboard({ path }: { path: string }) {
     try {
       await session.logout();
       window.location.assign("/konto/anmelden");
-    } catch (error) {
-      setLogoutError(accountErrorMessage(error));
+    } catch {
+      setLogoutError("We could not sign you out. Please try again.");
     }
   }
   return (
@@ -219,7 +206,9 @@ function AccountDashboard({ path }: { path: string }) {
             <AccountVouchers {...props} />
           ))}
         {active === "settings" &&
-          (settings.loading || !settings.data ? (
+          (settings.loading ? (
+            <AccountLoading />
+          ) : !settings.data ? (
             <AccountState
               loading={settings.loading}
               error={settings.error}
@@ -238,10 +227,10 @@ function AccountDashboard({ path }: { path: string }) {
       </AccountLayout>
       {!help.phone && !help.email && (
         <aside className="account-help">
-          <h2>Hilfe &amp; Kontakt</h2>
+          <h2>Help &amp; contact</h2>
           <p>
-            Fragen zu Deiner Buchung oder Bestellung?{" "}
-            <a href={contact}>Kontakt aufnehmen</a>
+            Questions about your booking or order?{" "}
+            <a href={contact}>Get in touch</a>
           </p>
         </aside>
       )}
@@ -258,13 +247,13 @@ function EntryDetail(props: DashboardProps & { id: string }) {
     async (signal) => {
       if (reservation)
         throw new Error(
-          "Reservierungsdetails sind im Starter noch nicht verfügbar. Bitte kontaktiere das Team über den Reservierungsbereich.",
+          "Reservation details are not yet available in this starter. Please contact the team through the reservations page.",
         );
       if (booking) return dashboard.booking(value, signal);
       const order = (await dashboard.orders(signal)).find(
         (item) => item.id === value,
       );
-      if (!order) throw new Error("Dieser Eintrag ist nicht verfügbar.");
+      if (!order) throw new Error("This entry is unavailable.");
       return order;
     },
     [id],
@@ -283,7 +272,8 @@ function EntryDetail(props: DashboardProps & { id: string }) {
     },
     [id],
   );
-  if (!entry.data || entry.loading || entry.error)
+  if (entry.loading) return <AccountLoading />;
+  if (!entry.data || entry.error)
     return (
       <AccountState
         loading={entry.loading}
@@ -304,5 +294,13 @@ function EntryDetail(props: DashboardProps & { id: string }) {
       order={entry.data as AccountOrder}
       onChanged={entry.reload}
     />
+  );
+}
+
+function AccountLoading() {
+  return (
+    <p className="state" role="status">
+      Loading your account …
+    </p>
   );
 }

@@ -94,7 +94,9 @@ test("runtime HTML contains installation branding and request-origin metadata", 
   const response = await fetch(`${origin}/events`);
   const html = await response.text();
   expect(response.status).toBe(200);
-  expect(html).toContain("Erlebnisse &amp; Termine | Testatelier");
+  expect(html).toContain("Experiences &amp; dates | Testatelier");
+  expect(html).toContain('lang="en"');
+  expect(html).toContain('content="en_GB"');
   expect(html.includes(`href="${response.url}"`)).toBe(true);
   expect(html.includes(`property="og:url" content="${response.url}"`)).toBe(
     true,

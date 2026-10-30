@@ -2,7 +2,7 @@
 
 A small Next.js 16 starter for an independent Shopvento installation. It consumes the published **`@shopvento/ui` 0.3.0** for event booking, vouchers, catalogue, cart, checkout, order returns and customer accounts. The host supplies routes, theme, editorial content and a same-origin API transport.
 
-The German demo, **Nebenan Atelier**, is fictional. It illustrates workshops, tastings and guided experiences. Legal pages are visibly marked placeholders. Replace the demo copy and legal pages before launch.
+The English-language demo, **Nebenan Atelier**, is fictional. It illustrates workshops, tastings and guided experiences. Legal pages are visibly marked placeholders. Replace the demo copy and legal pages before launch.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/shopventoapp/storefront)
 
@@ -37,11 +37,19 @@ Use the same variable in Cloudflare's Worker settings. The deployment config del
 
 `/gutscheine` redirects to the package's `/shop/gutscheine` category. Product and account detail paths use their static route shells. The local catalogue artwork is illustrative; product photography comes from the API.
 
-The starter groups all physical articles into “Produkte” and vouchers into “Gutscheine”, including installations with custom category slugs. Change the two presentation adapters and section list in `src/components/commerce.tsx` together to expose a different taxonomy.
+The starter groups all physical articles into “Products” and vouchers into “Vouchers”, including installations with custom category slugs. Change the two presentation adapters and section list in `src/components/commerce.tsx` together to expose a different taxonomy.
 
 The Worker serves the static Next.js export from `out/`, sends shop product paths to the shared shop shell, and generates origin-correct robots and sitemap responses. It adapts page titles, canonical links and Open Graph metadata to the request origin and runtime `brand_name`. Private account, cart, checkout and return pages are excluded from the sitemap and carry no-index headers.
 
 The starter is **one installation per deployment**. Host-to-installation routing and editable content pages are separate features. Event/product content is loaded by the package in the browser; the static shell provides page-level metadata, rather than a server-rendered catalogue.
+
+## UI language
+
+The starter-owned interface, metadata, legal placeholders and synthetic demo content are in English. EUR is retained, with `en-GB` dates and prices wherever the package exposes a formatter. Stable route paths and API field names remain unchanged.
+
+All package copy overrides are in `src/lib/ui-english.ts`: shop, booking, newsletter, reservation and account domain labels, plus shared English formatting. Edit those dictionaries to switch their text, preserving numbered placeholders and function arguments. Starter editorial copy lives in `src/app`, `src/lib/routes.ts` and the host components. Runtime branding, product content, country names and backend errors come from your installation and must be authored in the desired language there.
+
+`@shopvento/ui` 0.3.0 still has fixed German booking/account copy and some fixed date/price formatting with no host locale option. The overrides cannot make those components fully English; upgrade to a package with complete locale support when available, then remove the temporary catalogue file.
 
 ## Theme and branding
 
@@ -81,6 +89,7 @@ Cloudflare references: [Static Assets bindings](https://developers.cloudflare.co
 | `bun run format`                  | Apply formatting and safe lint fixes.                                                                                                                                                              |
 | `bun run typecheck`               | Check app, Worker, scripts and test TypeScript without emitting files.                                                                                                                             |
 | `bun run screenshots [directory]` | Capture the four review scenes at 390 and 1280 px using synthetic API responses and the default light theme. Start the dev server and install Chromium first. Defaults to `artifacts/screenshots`. |
+| `bun run test:worker`             | Test the built Worker with a local synthetic upstream, including branding, metadata, private routes and proxy behaviour.                                                                           |
 | `bun run test:unit`               | Test the host-owned proxy's routing, origin, cookie, redirection and failure behavior.                                                                                                             |
 | `bun run test`                    | Run Playwright smoke tests with API fixtures; install Chromium first with `bunx playwright install chromium`.                                                                                      |
 | `bun run brandcheck`              | Run `scripts/check-brand.ts`: scan repository text and commit messages for private brand/host terms and recognizable secret formats; report paths without printing matched values.                 |

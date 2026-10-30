@@ -47,3 +47,17 @@ describe("static route shells", () => {
     }
   });
 });
+
+// Verify the exported shell stays English independently of API-authored content.
+describe("English page metadata", () => {
+  test("uses an English locale and copy for public and private pages", async () => {
+    const { pageMetadata } = await import("../../src/lib/metadata");
+    const publicPage = pageMetadata("/events");
+    expect(publicPage.title).toBe("Experiences & dates");
+    expect(publicPage.openGraph).toMatchObject({ locale: "en_GB" });
+    expect(publicPage.description).toContain("book your place");
+    expect(pageMetadata("/konto", "Your account").description).toBe(
+      "Bookings, vouchers and orders at Nebenan Atelier.",
+    );
+  });
+});

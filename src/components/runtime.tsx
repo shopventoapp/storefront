@@ -63,7 +63,7 @@ export function RuntimeProvider({ children }: { children: React.ReactNode }) {
     const description =
       "description" in page
         ? page.description.replaceAll(demoName, name)
-        : `Buchungen, Gutscheine und Bestellungen · ${name}`;
+        : `Bookings, vouchers and orders · ${name}`;
     function syncMetadata() {
       const set = (selector: string, attribute: string, value: string) => {
         for (const element of document.querySelectorAll(selector))

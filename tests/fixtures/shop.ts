@@ -13,8 +13,8 @@ import type {
 // These wire shapes follow the package's public OpenAPI contract.
 export const event = {
   tasting_id: 1,
-  tasting_name: "Kräuterwerkstatt",
-  full_name: "Kräuterwerkstatt",
+  tasting_name: "Herb workshop",
+  full_name: "Herb workshop",
   price: 4900,
   variant_id: null,
   variant_name: null,
@@ -37,7 +37,7 @@ export const timewindow = {
 } satisfies Timewindow;
 
 export const settings = {
-  countries: [{ value: "DE", label: "Deutschland" }],
+  countries: [{ value: "DE", label: "Germany" }],
   installation_country: "DE",
   min_customer_age: 0,
   direct_booking_enabled: true,
@@ -51,10 +51,10 @@ export const settings = {
 
 export const product = {
   id: "kraeuter-set",
-  title: "Kräuter-Set",
+  title: "Herb kit",
   slug: "kraeuter-set",
-  subtitle: "Ein kleines Stück Werkstatt für zu Hause.",
-  description: "Entdecke frische Ideen mit Deinem Kräuter-Set.",
+  subtitle: "A little workshop for your home.",
+  description: "Discover fresh ideas with your herb kit.",
   price: 2400,
   type: "PHYSICAL",
   vat_rate: { id: 1, bezeichnung: "Standard", satz: 19, aktiv: true },
@@ -62,13 +62,13 @@ export const product = {
   images: [],
   category: {
     id: "produkte",
-    name: "Produkte",
-    title: "Produkte",
+    name: "Products",
+    title: "Products",
     slug: "produkte",
     is_public: true,
     is_voucher: false,
   },
-  availability: { state: "AVAILABLE", text: "Verfügbar" },
+  availability: { state: "AVAILABLE", text: "Available" },
   withdrawal_note: "",
 } satisfies ShopArticle;
 
@@ -76,16 +76,16 @@ export const voucher = {
   ...product,
   id: "zeit-gutschein",
   slug: "zeit-gutschein",
-  title: "Zeit verschenken",
-  subtitle: "Für Workshops, Entdeckungen und gemeinsame Momente.",
+  title: "Give time together",
+  subtitle: "For workshops, discoveries and shared moments.",
   price: 5000,
   type: "VOUCHER",
   voucher_kind: "MULTI_PURPOSE",
   category: {
     ...product.category,
     id: "gutscheine",
-    name: "Gutscheine",
-    title: "Gutscheine",
+    name: "Vouchers",
+    title: "Vouchers",
     slug: "gutscheine",
     is_voucher: true,
   },
@@ -101,7 +101,7 @@ export const catalogue = {
 const pickup = {
   id: "atelier-pickup",
   type: "PICKUP",
-  title: "Abholung im Atelier",
+  title: "Collection at the atelier",
   price: 0,
   eligible_dates: [nextDate],
 } satisfies NonNullable<
@@ -188,8 +188,8 @@ export async function mockShop(page: Page) {
 export const accountProfile = {
   id: 1,
   first_name: "Demo",
-  last_name: "Gast",
-  full_name: "Demo Gast",
+  last_name: "Guest",
+  full_name: "Demo Guest",
   email: "demo@example.com",
   country: "DE",
   is_email_verified: true,
@@ -212,7 +212,7 @@ export const accountBooking = {
   date: nextDate,
   start_time: "18:00:00",
   end_time: "20:00:00",
-  event_name: "Kräuterwerkstatt",
+  event_name: "Herb workshop",
 } satisfies AccountBooking;
 
 export async function mockAccount(page: Page) {

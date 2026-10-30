@@ -6,10 +6,9 @@ export const buildOrigin = "https://storefront.example";
 
 export function pageMetadata(path: string, title?: string): Metadata {
   const page = publicPages.find((page) => page.path === path);
-  const name = title ?? page?.title ?? "Dein Erlebnis";
+  const name = title ?? page?.title ?? "Your experience";
   const description =
-    page?.description ??
-    "Buchungen, Gutscheine und Bestellungen im Nebenan Atelier.";
+    page?.description ?? "Bookings, vouchers and orders at Nebenan Atelier.";
   return {
     title: name,
     description,
@@ -19,7 +18,7 @@ export function pageMetadata(path: string, title?: string): Metadata {
       description,
       url: path,
       type: "website",
-      locale: "de_DE",
+      locale: "en_GB",
       siteName: demoName,
       images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
     },

@@ -5,10 +5,10 @@ export default function Page() {
   return (
     <div className="wrap page-content">
       <div className="page-intro">
-        <h1>Post aus dem Atelier</h1>
+        <h1>News from the atelier</h1>
         <p>
-          Neue Termine und frische Ideen für Deine nächste Auszeit. Du
-          entscheidest, wann Du wieder abbestellst.
+          New dates and fresh ideas for your next break. Unsubscribe whenever
+          you like.
         </p>
       </div>
       <Newsletter />

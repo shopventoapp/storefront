@@ -16,8 +16,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(buildOrigin),
   title: { default: demoName, template: `%s · ${demoName}` },
-  description:
-    "Entdecke Workshops, Verkostungen und Touren im Nebenan Atelier.",
+  description: "Discover workshops, tastings and tours at Nebenan Atelier.",
 };
 
 const contract =
@@ -27,7 +26,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="de" className="sv-redesign">
+    <html lang="en" className="sv-redesign">
       <head>
         <link rel="stylesheet" href="/branding/theme.css" />
       </head>
@@ -38,7 +37,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: `<!-- ${contract} -->` }}
         />
         <a className="skip-link" href="#inhalt">
-          Zum Inhalt
+          Skip to content
         </a>
         <RuntimeProvider>
           <SiteHeader />

@@ -5,11 +5,8 @@ export default function Page() {
   return (
     <div className="wrap page-content">
       <div className="page-intro">
-        <h1>Ein Platz für Dich</h1>
-        <p>
-          Plane Deinen nächsten Besuch. Verfügbare Zeiten und Plätze findest Du
-          hier.
-        </p>
+        <h1>A place for you</h1>
+        <p>Plan your next visit. Find available times and places here.</p>
       </div>
       <Reservation />
     </div>

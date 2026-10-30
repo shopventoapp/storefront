@@ -4,21 +4,20 @@ export default function Page() {
   return (
     <article className="wrap legal page-content">
       <div className="page-intro">
-        <h1>Impressum</h1>
-        <p>Platzhalter für die Demo</p>
+        <h1>Legal notice</h1>
+        <p>Demo placeholder</p>
       </div>
-      <h2>Vor Veröffentlichung ersetzen</h2>
+      <h2>Replace before publishing</h2>
       <p>
-        Dies ist kein rechtsgültiger Text. Ergänze hier die für Dein Angebot
-        erforderlichen Angaben und lasse sie fachlich prüfen. Dieses fiktive
-        Atelier hat keine echte Anschrift oder Kontaktadresse.
+        This is a demo placeholder. Add the information required for your
+        business and have it reviewed before publishing. This fictional atelier
+        has no real address or contact details.
       </p>
       <p>
-        Die verbundenen Instanzeinstellungen können auf Deine eigenen
-        rechtlichen Seiten verweisen.
+        The connected installation settings can link to your own legal pages.
       </p>
       <a className="text-link" href="/">
-        Zur Startseite
+        Back to home
       </a>
     </article>
   );

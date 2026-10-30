@@ -8,6 +8,7 @@ import {
   useAccountSession,
 } from "@shopvento/ui";
 import { useSearchParams } from "next/navigation";
+import { englishBookingFormat, englishBookingLabels } from "@/lib/ui-english";
 import { bookingClient, publicHref, useBranding } from "./runtime";
 
 const accountClient = createAccountClient();
@@ -42,30 +43,28 @@ export function UpcomingEvents({ compact = false }: { compact?: boolean }) {
   if (loading)
     return (
       <p className="state" role="status">
-        Die nächsten Erlebnisse werden geladen …
+        Loading upcoming experiences …
       </p>
     );
   if (error)
     return (
       <div className="state" role="status">
-        <p>
-          Die Termine sind gerade nicht erreichbar. Bitte versuche es noch
-          einmal.
-        </p>
+        <p>Dates are currently unavailable. Please try again.</p>
         <button type="button" className="text-button" onClick={reload}>
-          Termine erneut laden
+          Reload dates
         </button>
       </div>
     );
   if (!data?.windows.length)
     return (
       <p className="state">
-        Neue Termine sind in Planung. Im <a href="/newsletter">Newsletter</a>{" "}
-        erfährst Du davon.
+        New dates are on the way. Subscribe to our{" "}
+        <a href="/newsletter">Newsletter</a> for updates.
       </p>
     );
   return (
     <DateList
+      format={englishBookingFormat}
       windows={compact ? data.windows.slice(0, 3) : data.windows}
       events={data.events}
       locations={data.locations}
@@ -93,24 +92,25 @@ export function EventsPage() {
   return (
     <div className="wrap page-content">
       <div className="page-intro">
-        <h1>{eventId ? "Dein nächstes Erlebnis" : "Erlebnisse & Termine"}</h1>
+        <h1>{eventId ? "Your next experience" : "Experiences & dates"}</h1>
         <p>
           {eventId
-            ? "Wähle Deinen Termin und sichere Dir einen Platz. Wir freuen uns auf Dich."
-            : "Etwas Neues lernen, gemeinsam probieren, die Umgebung entdecken. Hier findest Du die nächsten Termine."}
+            ? "Choose your date and book a place. We look forward to seeing you."
+            : "Learn something new, taste together and explore the neighbourhood. Find your next date here."}
         </p>
       </div>
       {eventId ? (
         <div className="booking-area">
           <a className="text-link" href="/events">
-            Alle Erlebnisse ansehen
+            View all experiences
           </a>
           {session.loading ? (
             <p className="state" role="status">
-              Dein Zugang wird geladen …
+              Loading your account …
             </p>
           ) : (
             <EventBooking
+              labels={englishBookingLabels}
               key={eventId}
               client={bookingClient}
               baseUrl=""

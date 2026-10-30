@@ -1,12 +1,17 @@
 "use client";
 
+import type { ShopArticle, ShopSectionDefinition } from "@shopvento/ui";
 import {
-  defaultShopProduct,
-  type ShopArticle,
-  type ShopSectionDefinition,
-} from "@shopvento/ui";
-import { NewsletterSignup, ReservationForm } from "@shopvento/ui/forms";
+  NewsletterSignup,
+  type NewsletterSignupProps,
+  ReservationForm,
+} from "@shopvento/ui/forms";
 import { ShopFlow } from "@shopvento/ui/shop-flow";
+import {
+  englishMessages,
+  englishProductPresentation,
+  englishShopCopy,
+} from "@/lib/ui-english";
 import {
   publicApi,
   publicHref,
@@ -17,24 +22,18 @@ import {
 const sections: ShopSectionDefinition[] = [
   {
     key: "produkte",
-    label: "Produkte",
-    description: "Kleine Entdeckungen für zu Hause.",
+    label: "Products",
+    description: "Little discoveries for your home.",
     image: "produkte",
   },
   {
     key: "gutscheine",
-    label: "Gutscheine",
-    description: "Gemeinsame Zeit verschenken.",
+    label: "Vouchers",
+    description: "Give the gift of time together.",
     image: "gutscheine",
   },
 ];
 
-const labels = {
-  "Noch nichts im Korb.": "Dein Warenkorb ist leer.",
-  "Wein, Winzer, Rebsorte suchen": "Produkte und Gutscheine suchen",
-  "Wein, Feinkost oder ein Geschenk: Such Dir etwas Schönes aus.":
-    "Eine neue Idee oder ein Geschenk: Such Dir etwas Schönes aus.",
-};
 const images = {
   regal: "/catalogue.svg",
   produkte: "/catalogue.svg",
@@ -44,7 +43,7 @@ const images = {
 };
 function productPresentation(article: ShopArticle) {
   return {
-    ...defaultShopProduct(article),
+    ...englishProductPresentation(article),
     category: categoryFor(article),
     placeholder: "gift" as const,
   };
@@ -65,17 +64,21 @@ export function Commerce({ path }: { path: string }) {
         productModel={productPresentation}
         images={images}
         NewsletterComponent={Newsletter}
-        labels={labels}
+        {...englishShopCopy}
+        routes={{ events: "/events" }}
+        labels={englishMessages}
       />
     </div>
   );
 }
 
-export function Newsletter() {
+export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
   const brand = useBranding();
   const { data } = usePublicSettings();
   return (
     <NewsletterSignup
+      {...props}
+      labels={englishMessages}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
@@ -88,6 +91,8 @@ export function Reservation() {
   const { data } = usePublicSettings();
   return (
     <ReservationForm
+      NewsletterComponent={Newsletter}
+      labels={englishMessages}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       termsEnabled
