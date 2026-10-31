@@ -255,6 +255,9 @@ export const englishMessages: Record<string, string> = {
   empfohlen: "recommended",
   Shop: "Shop",
   "Im Shop suchen": "Search the shop",
+  "Produkte und Gutscheine suchen": "Search products and vouchers",
+  "Eine Entdeckung oder ein Geschenk: Such Dir etwas Schönes aus.":
+    "A new discovery or a gift: find something lovely.",
   "Der Online-Shop macht gerade Pause.": "The online shop is taking a break.",
   " Stöbern geht weiterhin. Im Laden sind wir wie gewohnt für Dich da.":
     " You can still browse. Our shop is open as usual.",
@@ -272,9 +275,9 @@ export const englishMessages: Record<string, string> = {
   Rebsorte: "Grape variety",
   Preis: "Price",
   "über 60 €": "over €60",
-  Flaschengröße: "Bottle size",
-  "Halbe Flasche": "Half bottle",
-  "Magnum und größer": "Magnum and larger",
+  Inhaltsmenge: "Bottle size",
+  "Unter 0,5 l": "Half bottle",
+  "Ab 1,4 l": "Magnum and larger",
   Bio: "Organic",
   "Bio-zertifiziert": "Certified organic",
   "Aus unseren Veranstaltungen": "From our events",

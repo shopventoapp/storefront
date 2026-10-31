@@ -7,7 +7,7 @@
       "dependencies": {
         "@fontsource/bricolage-grotesque": "^5.3.0",
         "@fontsource/source-sans-3": "^5.3.1",
-        "@shopvento/ui": "file:../svui-host-gaps/artifacts/shopvento-ui-0.4.0-8a8aaca860b6.tgz",
+        "@shopvento/ui": "file:../svui-host-gaps/artifacts/shopvento-ui-0.4.0-bc39ac4f15f1.tgz",
         "@tailwindcss/postcss": "4",
         "next": "16",
         "react": "19",
@@ -217,7 +217,7 @@
 
     "@poppinss/exception": ["@poppinss/exception@1.2.3", "", {}, "sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw=="],
 
-    "@shopvento/ui": ["@shopvento/ui@../svui-host-gaps/artifacts/shopvento-ui-0.4.0-8a8aaca860b6.tgz", { "dependencies": { "qrcode-generator": "^2.0.4" }, "peerDependencies": { "react": "^18.2.0 || ^19.0.0", "react-dom": "^18.2.0 || ^19.0.0" } }, "sha512-PhpC7XbiKblmSeOPJ58lIAD1t5OcHoBe/QcxKMsDvOZcCq+AkpdiW7iOSSN8w2WbE2G9fgWE57CncI1tMrus3Q=="],
+    "@shopvento/ui": ["@shopvento/ui@../svui-host-gaps/artifacts/shopvento-ui-0.4.0-bc39ac4f15f1.tgz", { "dependencies": { "qrcode-generator": "^2.0.4" }, "peerDependencies": { "react": "^18.2.0 || ^19.0.0", "react-dom": "^18.2.0 || ^19.0.0" } }, "sha512-+osmKjKHBVX6PAgTJbiEVpEJF/JaQzRMI3PqO4CEfZZmdP1DsDLHzTFldkKDGdcfL4Z2FhU3txMUB4y02/3gHQ=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
 
