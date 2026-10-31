@@ -21,7 +21,7 @@
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.3.0",
     "@fontsource/source-sans-3": "^5.3.1",
-    "@shopvento/ui": "file:../svui-locale/artifacts/shopvento-ui-0.4.0-f8b9f08397c0.tgz",
+    "@shopvento/ui": "file:../svui-locale/artifacts/shopvento-ui-0.4.0-0d8b0eff295a.tgz",
     "@tailwindcss/postcss": "4",
     "next": "16",
     "react": "19",
