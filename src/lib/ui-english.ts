@@ -9,6 +9,7 @@ import {
 // Temporary @shopvento/ui English overrides. Remove when the package ships English.
 // German keys and numbered placeholders are part of the package message contract.
 export const englishMessages: Record<string, string> = {
+  "Hilfe & Kontakt": "Help & contact",
   "Noch {0} bis zum kostenlosen Versand": "{0} away from free delivery",
   "Kostenloser Versand": "Free delivery",
   "Noch ": "Only ",
@@ -272,12 +273,8 @@ export const englishMessages: Record<string, string> = {
   Entfernen: "Remove",
   Land: "Country",
   Region: "Region",
-  Rebsorte: "Grape variety",
   Preis: "Price",
   "über 60 €": "over €60",
-  Inhaltsmenge: "Bottle size",
-  "Unter 0,5 l": "Half bottle",
-  "Ab 1,4 l": "Magnum and larger",
   Bio: "Organic",
   "Bio-zertifiziert": "Certified organic",
   "Aus unseren Veranstaltungen": "From our events",

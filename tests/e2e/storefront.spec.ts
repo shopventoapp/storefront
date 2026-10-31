@@ -255,3 +255,28 @@ test("account contact falls back to loaded public company data", async ({
     page.locator('a[href="mailto:hello@example.com"]').first(),
   ).toBeVisible();
 });
+
+test("account keeps help and an ordinary branding contact link", async ({
+  page,
+}) => {
+  await mockAccount(page);
+  await page.route("**/api/shop/branding", (route) =>
+    route.fulfill({
+      json: {
+        ...branding,
+        contact_url: "https://example.com/contact",
+        company: {},
+      },
+    }),
+  );
+  await page.goto("/konto");
+  await expect(
+    page.getByRole("heading", { name: "Hallo, Demo." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Help & contact", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Help & contact", exact: true }),
+  ).toHaveAttribute("href", "https://example.com/contact");
+});

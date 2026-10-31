@@ -31,7 +31,11 @@ import {
   useAccountSession,
 } from "@shopvento/ui";
 import { useEffect, useRef, useState } from "react";
-import { englishAccountLabels, englishAccountNotice } from "@/lib/ui-english";
+import {
+  englishAccountLabels,
+  englishAccountNotice,
+  englishMessages,
+} from "@/lib/ui-english";
 import {
   bookingClient,
   publicHref,
@@ -193,6 +197,11 @@ function AccountDashboard({ path }: { path: string }) {
         onLogout={() => void logout()}
       >
         {logoutError && <p role="alert">{logoutError}</p>}
+        {!contact.startsWith("tel:") && !contact.startsWith("mailto:") && (
+          <p>
+            <a href={contact}>{englishMessages["Hilfe & Kontakt"]}</a>
+          </p>
+        )}
         {active === "overview" && <AccountOverview {...props} />}
         {active === "bookings" &&
           (id ? (
