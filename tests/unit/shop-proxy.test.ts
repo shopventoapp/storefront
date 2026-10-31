@@ -4,7 +4,7 @@ import {
   isShopProxyPath,
   proxyShopRequest,
   readSmallJson,
-} from "../../src/lib/shop-proxy";
+} from "@shopvento/ui/proxy";
 
 const site = "https://storefront.example";
 const apiUrl = "https://installation.example";

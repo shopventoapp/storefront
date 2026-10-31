@@ -9,6 +9,8 @@ import {
   type AccountOrder,
   AccountOrderDetail,
   AccountOverview,
+  type AccountReservation,
+  AccountReservationDetail,
   type AccountRoutes,
   AccountSettings,
   AccountState,
@@ -138,9 +140,11 @@ function AccountDashboard({ path }: { path: string }) {
   const [logoutError, setLogoutError] = useState<string>();
   const contact = publicHref(branding.contact_url, "/reservierung");
   const help: AccountHelp = {
-    phone: contact.startsWith("tel:") ? contact.slice(4) : "",
-    phoneLabel: contact.startsWith("tel:") ? contact.slice(4) : "",
-    email: contact.startsWith("mailto:") ? contact.slice(7).split("?")[0] : "",
+    ...(contact.startsWith("tel:") ? { phone: contact.slice(4) } : {}),
+    ...(contact.startsWith("mailto:")
+      ? { email: contact.slice(7).split("?")[0] }
+      : {}),
+    company: branding.company,
     address: "",
     routeUrl: publicHref(branding.location_links?.[0]?.href, "/reservierung"),
   };
@@ -180,10 +184,7 @@ function AccountDashboard({ path }: { path: string }) {
     }
   }
   return (
-    <section
-      className={`account-page${!help.phone && !help.email ? " account-contact-url" : ""}`}
-    >
-      <style>{`.account-contact-url a[href="tel:"], .account-contact-url a[href="mailto:"], .account-contact-url .card:has(> a[href="tel:"]):has(> a[href="mailto:"]) { display: none; }`}</style>
+    <section className="account-page">
       <AccountLayout
         profile={session.profile}
         routes={routes}
@@ -225,15 +226,6 @@ function AccountDashboard({ path }: { path: string }) {
             />
           ))}
       </AccountLayout>
-      {!help.phone && !help.email && (
-        <aside className="account-help">
-          <h2>Help &amp; contact</h2>
-          <p>
-            Questions about your booking or order?{" "}
-            <a href={contact}>Get in touch</a>
-          </p>
-        </aside>
-      )}
     </section>
   );
 }
@@ -243,12 +235,11 @@ function EntryDetail(props: DashboardProps & { id: string }) {
   const booking = id.startsWith("t-");
   const reservation = id.startsWith("r-");
   const value = id.replace(/^[otr]-/, "");
-  const entry = useAccountResource<AccountBooking | AccountOrder>(
+  const entry = useAccountResource<
+    AccountBooking | AccountOrder | AccountReservation
+  >(
     async (signal) => {
-      if (reservation)
-        throw new Error(
-          "Reservation details are not yet available in this starter. Please contact the team through the reservations page.",
-        );
+      if (reservation) return dashboard.reservation(Number(value), signal);
       if (booking) return dashboard.booking(value, signal);
       const order = (await dashboard.orders(signal)).find(
         (item) => item.id === value,
@@ -281,7 +272,12 @@ function EntryDetail(props: DashboardProps & { id: string }) {
         retry={entry.reload}
       />
     );
-  return booking ? (
+  return reservation ? (
+    <AccountReservationDetail
+      {...props}
+      reservation={entry.data as AccountReservation}
+    />
+  ) : booking ? (
     <AccountEventDetail
       {...props}
       booking={entry.data as AccountBooking}

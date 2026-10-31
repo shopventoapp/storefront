@@ -1,6 +1,7 @@
 "use client";
 
 import { createBookingClient, useAccountResource } from "@shopvento/ui";
+import { type Branding, loadBranding } from "@shopvento/ui/branding";
 import { createContext, useContext, useEffect, useState } from "react";
 import { demoName, privatePages, publicPages, shellPath } from "@/lib/routes";
 
@@ -9,20 +10,7 @@ export const bookingClient = createBookingClient({
   credentials: "same-origin",
 });
 
-type BrandLink = { label: string; href: string; isExternal?: boolean };
-export type Branding = {
-  brand_name?: string;
-  logo_url?: string;
-  logo_alt?: string;
-  footer_logo_url?: string;
-  privacy_url?: string;
-  imprint_url?: string;
-  terms_url?: string;
-  withdrawal_url?: string;
-  contact_url?: string;
-  navigation?: BrandLink[];
-  location_links?: BrandLink[];
-};
+export type { Branding } from "@shopvento/ui/branding";
 
 const BrandContext = createContext<Branding>({});
 export const useBranding = () => useContext(BrandContext);
@@ -39,14 +27,18 @@ export function publicHref(value: string | undefined, fallback: string) {
   }
 }
 
-export function RuntimeProvider({ children }: { children: React.ReactNode }) {
-  const [branding, setBranding] = useState<Branding>({});
+export function RuntimeProvider({
+  children,
+  initialBranding = {},
+}: {
+  children: React.ReactNode;
+  initialBranding?: Branding;
+}) {
+  const [branding, setBranding] = useState<Branding>(initialBranding);
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/shop/branding", { signal: controller.signal })
-      .then(async (response) => {
-        if (response.ok) setBranding(await response.json());
-      })
+    loadBranding({ signal: controller.signal })
+      .then(setBranding)
       .catch(() => {
         /* Default branding stays usable when the instance is unavailable. */
       });

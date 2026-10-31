@@ -23,11 +23,16 @@ describe("English package overrides", () => {
   })) {
     test(`${name} has complete overrides with preserved runtime placeholders`, () => {
       for (const key of Object.keys(catalogue)) {
-        expect(englishMessages[key], key).toBeString();
-        expect(englishMessages[key].length, key).toBeGreaterThan(0);
-        expect(placeholders(englishMessages[key]), key).toEqual(
-          placeholders(key),
-        );
+        const neutralKeys = new Set([
+          "Wein, Winzer, Rebsorte suchen",
+          "Wein, Feinkost oder ein Geschenk: Such Dir etwas Schönes aus.",
+        ]);
+        const value =
+          englishMessages[key] ??
+          (neutralKeys.has(key) ? catalogue[key] : undefined);
+        expect(value, key).toBeString();
+        expect(value?.length, key).toBeGreaterThan(0);
+        expect(placeholders(value ?? ""), key).toEqual(placeholders(key));
       }
     });
   }

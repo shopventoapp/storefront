@@ -6,7 +6,7 @@ import {
   type ShopArticle,
 } from "@shopvento/ui";
 
-// Temporary @shopvento/ui 0.3.0 overrides. Remove when the package ships English.
+// Temporary @shopvento/ui English overrides. Remove when the package ships English.
 // German keys and numbered placeholders are part of the package message contract.
 export const englishMessages: Record<string, string> = {
   "Noch {0} bis zum kostenlosen Versand": "{0} away from free delivery",
@@ -219,8 +219,6 @@ export const englishMessages: Record<string, string> = {
   Warenkorb: "cart",
   "Noch nichts im Korb.": "Your cart is empty.",
   "Im Shop stöbern": "Browse the shop",
-  "Wein, Feinkost oder ein Geschenk: Such Dir etwas Schönes aus.":
-    "A new discovery or a gift: find something lovely.",
   Gutschein: "Voucher",
   "Zur Kasse": "Checkout",
   "Der Shop lädt gerade nicht.": "The shop could not be loaded.",
@@ -257,7 +255,6 @@ export const englishMessages: Record<string, string> = {
   empfohlen: "recommended",
   Shop: "Shop",
   "Im Shop suchen": "Search the shop",
-  "Wein, Winzer, Rebsorte suchen": "Search products and vouchers",
   "Der Online-Shop macht gerade Pause.": "The online shop is taking a break.",
   " Stöbern geht weiterhin. Im Laden sind wir wie gewohnt für Dich da.":
     " You can still browse. Our shop is open as usual.",

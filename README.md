@@ -1,6 +1,6 @@
 # Shopvento storefront
 
-A small Next.js 16 starter for an independent Shopvento installation. It consumes the published **`@shopvento/ui` 0.3.0** for event booking, vouchers, catalogue, cart, checkout, order returns and customer accounts. The host supplies routes, theme, editorial content and a same-origin API transport.
+A small Next.js 16 starter for an independent Shopvento installation. It consumes the published **`@shopvento/ui` 0.4.0** for event booking, vouchers, catalogue, cart, checkout, order returns and customer accounts. The host supplies routes, theme, editorial content and a same-origin API transport.
 
 The English-language demo, **Nebenan Atelier**, is fictional. It illustrates workshops, tastings and guided experiences. Legal pages are visibly marked placeholders. Replace the demo copy and legal pages before launch.
 
@@ -33,7 +33,7 @@ Use the same variable in Cloudflare's Worker settings. The deployment config del
 
 ## Pages and composition
 
-`src/app` defines the public pages and metadata. `src/lib/routes.ts` holds the neutral brand name and public route metadata. Client components compose package flows. `src/lib/shop-proxy.ts` is the shared Web Request/Response transport; development and `src/worker.ts` both use it.
+`src/app` defines the public pages and metadata. `src/lib/routes.ts` holds the neutral brand name and public route metadata. Client components compose package flows. The package exports the shared Web Request/Response transport at `@shopvento/ui/proxy`; development and `src/worker.ts` both use it.
 
 `/gutscheine` redirects to the package's `/shop/gutscheine` category. Product and account detail paths use their static route shells. The local catalogue artwork is illustrative; product photography comes from the API.
 
@@ -49,7 +49,7 @@ The starter-owned interface, metadata, legal placeholders and synthetic demo con
 
 All package copy overrides are in `src/lib/ui-english.ts`: shop, booking, newsletter, reservation and account domain labels, plus shared English formatting. Edit those dictionaries to switch their text, preserving numbered placeholders and function arguments. Starter editorial copy lives in `src/app`, `src/lib/routes.ts` and the host components. Runtime branding, product content, country names and backend errors come from your installation and must be authored in the desired language there.
 
-`@shopvento/ui` 0.3.0 still has fixed German booking/account copy and some fixed date/price formatting with no host locale option. The overrides cannot make those components fully English; upgrade to a package with complete locale support when available, then remove the temporary catalogue file.
+`@shopvento/ui` 0.4.0 still has fixed German booking/account copy and some fixed date/price formatting with no host locale option. The overrides cannot make those components fully English; upgrade to a package with complete locale support when available, then remove the temporary catalogue file.
 
 ## Theme and branding
 
@@ -57,9 +57,9 @@ The defaults follow Shopvento's typography, coral and aubergine palette and roun
 
 At runtime, `GET /api/shop/branding` supplies the installation's name, logos, navigation and legal links, and `/branding/theme.css` overrides default tokens. Both travel through the same-origin proxy. Keep the instance stylesheet after the defaults. A branding outage retains the neutral shell. See the [package theming guide](https://docs.shopvento.de/guides/theming/) for component tokens and scope precedence.
 
-The backend stylesheet emits `--brand-*` variables. The global stylesheet bridges primary/accent/background/surface/text/muted/link colors, primary foreground/hover/soft colors, and heading/body font families into host and `--sv-*` tokens. Exact hashed branding font assets are proxied on the same origin. Direct `--sv-*` overrides remain supported.
+The backend stylesheet emits `--brand-*` variables. `brandingTokens()` from `@shopvento/ui/branding` maps package tokens in the root layout, with host theme fallbacks. The global stylesheet owns the host design tokens. Exact hashed branding font assets are proxied on the same origin. Direct `--sv-*` overrides remain supported.
 
-The package does not yet export a reusable proxy or a typed branding loader. The small host transport forwards only the shop namespace, branding stylesheet and explicit public reservation endpoints. It rejects cross-origin mutations, strips upstream cookie domains, keeps personal responses uncached and removes bearer credentials from login payloads. It forwards edge-provided visitor IPs only in Cloudflare, never from untrusted development headers. Business and account state remain in the package/backend.
+The starter uses the package proxy (`@shopvento/ui/proxy`) in its Worker and development server, and `loadBranding()` in the build layout, browser and Worker metadata. The shared transport forwards only the shop namespace, branding stylesheet and explicit public reservation endpoints. It rejects cross-origin mutations, strips upstream cookie domains, keeps personal responses uncached and removes bearer credentials from login payloads. It forwards edge-provided visitor IPs only in Cloudflare, never from untrusted development headers. Business and account state remain in the package/backend.
 
 ## Deploy
 
@@ -90,7 +90,7 @@ Cloudflare references: [Static Assets bindings](https://developers.cloudflare.co
 | `bun run typecheck`               | Check app, Worker, scripts and test TypeScript without emitting files.                                                                                                                             |
 | `bun run screenshots [directory]` | Capture the four review scenes at 390 and 1280 px using synthetic API responses and the default light theme. Start the dev server and install Chromium first. Defaults to `artifacts/screenshots`. |
 | `bun run test:worker`             | Test the built Worker with a local synthetic upstream, including branding, metadata, private routes and proxy behaviour.                                                                           |
-| `bun run test:unit`               | Test the host-owned proxy's routing, origin, cookie, redirection and failure behavior.                                                                                                             |
+| `bun run test:unit`               | Test the shared package proxy's routing, origin, cookie, redirection and failure behavior.                                                                                                         |
 | `bun run test`                    | Run Playwright smoke tests with API fixtures; install Chromium first with `bunx playwright install chromium`.                                                                                      |
 | `bun run brandcheck`              | Run `scripts/check-brand.ts`: scan repository text and commit messages for private brand/host terms and recognizable secret formats; report paths without printing matched values.                 |
 | `bun run deploy`                  | Build and deploy the Worker plus static assets with Wrangler. Requires Cloudflare authentication.                                                                                                  |
@@ -114,3 +114,5 @@ bun run brandcheck
 Read the [package changelog](https://github.com/shopventoapp/ui/blob/main/CHANGELOG.md), confirm backend compatibility, review any host glue that the release replaces, and commit both `package.json` and `bun.lock`. Keep the package published-registry dependency; do not use local source aliases or copied checkout code.
 
 MIT licensed. Bundled fonts retain the SIL Open Font License; see [third-party notices](THIRD_PARTY_NOTICES.md). See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+This branch uses a local 0.4.0 tarball file dependency for review. Reservation details render read-only because the public API has no rules endpoint. Account contact uses optional public company data; empty links are hidden by the package. Catalogue artwork and search/cart defaults are neutral; remaining section copy and English overrides are host editorial choices.

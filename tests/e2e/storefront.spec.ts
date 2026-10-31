@@ -200,3 +200,58 @@ test("event loading errors use English host copy", async ({ page }) => {
     page.getByRole("button", { name: "Reload dates" }),
   ).toBeVisible();
 });
+
+test("reservation details render read-only without host policy", async ({
+  page,
+}) => {
+  await mockAccount(page);
+  await page.route("**/api/shop/table-reservations/22", (route) => {
+    expect(route.request().method()).toBe("GET");
+    return route.fulfill({
+      json: {
+        id: 22,
+        date: "2099-10-20",
+        time: "19:00",
+        num_guests: 2,
+        notes: "Near the window",
+        status: "confirmed",
+        location_name: "Demo studio",
+        franchise_location_id: 1,
+        created_at: "2026-10-01",
+        updated_at: "2026-10-01",
+      },
+    });
+  });
+  await page.goto("/konto/buchungen/r-22");
+  await expect(page.getByText("Near the window")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Ändern", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Reservierung stornieren", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator('a[href="tel:"], a[href="mailto:"]')).toHaveCount(
+    0,
+  );
+});
+
+test("account contact falls back to loaded public company data", async ({
+  page,
+}) => {
+  await mockAccount(page);
+  await page.route("**/api/shop/branding", (route) =>
+    route.fulfill({
+      json: {
+        ...branding,
+        company: { phone: "+49123456789", email: "hello@example.com" },
+      },
+    }),
+  );
+  await page.goto("/konto");
+  await expect(
+    page.locator('a[href="tel:+49123456789"]').first(),
+  ).toBeVisible();
+  await expect(
+    page.locator('a[href="mailto:hello@example.com"]').first(),
+  ).toBeVisible();
+});

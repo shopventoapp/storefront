@@ -34,18 +34,10 @@ const sections: ShopSectionDefinition[] = [
   },
 ];
 
-const images = {
-  regal: "/catalogue.svg",
-  produkte: "/catalogue.svg",
-  gutscheine: "/catalogue.svg",
-  laden: "/catalogue.svg",
-  lieferung: "/catalogue.svg",
-};
 function productPresentation(article: ShopArticle) {
   return {
     ...englishProductPresentation(article),
     category: categoryFor(article),
-    placeholder: "gift" as const,
   };
 }
 function categoryFor(article: ShopArticle) {
@@ -62,7 +54,6 @@ export function Commerce({ path }: { path: string }) {
         sections={sections}
         categoryKey={categoryFor}
         productModel={productPresentation}
-        images={images}
         NewsletterComponent={Newsletter}
         {...englishShopCopy}
         routes={{ events: "/events" }}
