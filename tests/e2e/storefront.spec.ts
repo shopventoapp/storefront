@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { branding, mockAccount, mockShop } from "../fixtures/shop";
+import {
+  branding,
+  mockAccount,
+  mockAccountActivity,
+  mockShop,
+} from "../fixtures/shop";
 
 test.beforeEach(async ({ page }) => {
   await mockShop(page);
@@ -282,7 +287,7 @@ test("account keeps help and an ordinary branding contact link", async ({
 });
 
 const germanCopy =
-  /\b(?:Bitte|Deine|Deinen|Deiner|Dein|Buchungsnummer|Gutscheincode|Gutscheine|Anmelden|Abmelden|Passwort|Vorname|Nachname|Plätze|Uhrzeit|Bestellungen|Widerruf|Schließen|Datenschutzerklärung|Buchungsfrist|Ausgebucht|Bestätigt|Abholung|Warenkorb)\b/i;
+  /\b(?:Abgeholt|Personen|Bitte|Deine|Deinen|Deiner|Dein|Buchungsnummer|Gutscheincode|Gutscheine|Anmelden|Abmelden|Passwort|Vorname|Nachname|Plätze|Uhrzeit|Bestellungen|Widerruf|Schließen|Datenschutzerklärung|Buchungsfrist|Ausgebucht|Bestätigt|Abholung|Warenkorb)\b/i;
 for (const width of [1280, 390]) {
   test(`package flows contain English copy at ${width}px`, async ({
     page,
@@ -336,3 +341,46 @@ for (const width of [1280, 390]) {
     });
   });
 }
+
+for (const width of [1280, 390])
+  test(`completed pickup and table reservation stay English at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockAccountActivity(page);
+    await page.goto("/konto/buchungen");
+    await expect(page.getByText("Table for 2 people").first()).toBeVisible();
+    await testInfo.attach(`account-reservation-${width}.html`, {
+      body: await page.content(),
+      contentType: "text/html",
+    });
+    await page.getByRole("button", { name: "Past", exact: true }).click();
+    await expect(
+      page.getByText("Collected", { exact: true }).first(),
+    ).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(germanCopy);
+    await testInfo.attach(`account-activity-${width}.html`, {
+      body: await page.content(),
+      contentType: "text/html",
+    });
+    await page.screenshot({
+      path: testInfo.outputPath(`account-activity-${width}.png`),
+      fullPage: true,
+    });
+    await page.goto("/konto/buchungen/r-17");
+    await expect(
+      page.getByRole("button", { name: "Add to calendar" }),
+    ).toBeVisible();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Add to calendar" }).click(),
+    ]);
+    const stream = await download.createReadStream();
+    if (!stream) throw new Error("Calendar download has no stream");
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    expect(Buffer.concat(chunks).toString()).toContain(
+      "SUMMARY:Table for 2 people",
+    );
+    await expect(page.locator("body")).not.toContainText(germanCopy);
+  });

@@ -69,7 +69,7 @@ export default async function RootLayout({
         <a className="skip-link" href="#inhalt">
           Skip to content
         </a>
-        <ShopventoProvider locale="en">
+        <ShopventoProvider locale="en-GB">
           <RuntimeProvider initialBranding={branding}>
             <SiteHeader />
             <main id="inhalt">{children}</main>

@@ -36,7 +36,7 @@ const sections: ShopSectionDefinition[] = [
 
 function productPresentation(article: ShopArticle) {
   return {
-    ...defaultShopProduct(article, {}, { locale: "en" }),
+    ...defaultShopProduct(article, {}, { locale: "en-GB" }),
     category: categoryFor(article),
   };
 }
@@ -57,7 +57,7 @@ export function Commerce({ path }: { path: string }) {
         NewsletterComponent={Newsletter}
         {...englishShopCopy}
         routes={{ events: "/events" }}
-        locale="en"
+        locale="en-GB"
       />
     </div>
   );
@@ -69,7 +69,7 @@ export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
   return (
     <NewsletterSignup
       {...props}
-      locale="en"
+      locale="en-GB"
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
@@ -83,7 +83,7 @@ export function Reservation() {
   return (
     <ReservationForm
       NewsletterComponent={Newsletter}
-      locale="en"
+      locale="en-GB"
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       termsEnabled

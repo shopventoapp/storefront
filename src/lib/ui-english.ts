@@ -26,7 +26,7 @@ export const englishAccountLabels = mergeAccountLabels(
     newsletter: "News from the atelier",
     ageHint: "Please check the minimum age for this offer.",
   },
-  { locale: "en" },
+  { locale: "en-GB" },
 );
 
 export const englishShopCopy = {

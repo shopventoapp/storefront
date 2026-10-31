@@ -64,7 +64,7 @@ export function UpcomingEvents({ compact = false }: { compact?: boolean }) {
     );
   return (
     <DateList
-      locale="en"
+      locale="en-GB"
       windows={compact ? data.windows.slice(0, 3) : data.windows}
       events={data.events}
       locations={data.locations}
