@@ -3,6 +3,7 @@ import type {
   AccountBooking,
   AccountOrder,
   AccountProfile,
+  AccountReservation,
   ShopArticle,
   ShopEvent,
   ShopOperations,
@@ -233,5 +234,46 @@ export async function mockAccount(page: Page) {
   );
   await page.route("**/api/shop/vouchers/customer", (route) =>
     route.fulfill({ json: [] }),
+  );
+}
+
+export const completedPickup = {
+  ...accountOrder,
+  id: "pickup-completed",
+  order_number: "DEMO-PICKUP",
+  status: "COMPLETED",
+  fulfillments: [
+    {
+      id: "pickup",
+      code: "pickup",
+      name: "Pickup",
+      type: "PICKUP",
+      price: 0,
+      status: "PICKUP_COMPLETED",
+    },
+  ],
+} satisfies AccountOrder;
+export const tableReservation = {
+  id: 17,
+  date: nextDate,
+  time: "18:00:00",
+  num_guests: 2,
+  status: "confirmed",
+  franchise_location_id: 1,
+  location_name: "Nebenan Atelier",
+  notes: null,
+  created_at: "2026-01-01T12:00:00Z",
+  updated_at: "2026-01-01T12:00:00Z",
+} satisfies AccountReservation;
+export async function mockAccountActivity(page: Page) {
+  await mockAccount(page);
+  await page.route("**/api/shop/orders/", (route) =>
+    route.fulfill({ json: [accountOrder, completedPickup] }),
+  );
+  await page.route("**/api/shop/table-reservations", (route) =>
+    route.fulfill({ json: [tableReservation] }),
+  );
+  await page.route("**/api/shop/table-reservations/17", (route) =>
+    route.fulfill({ json: tableReservation }),
   );
 }

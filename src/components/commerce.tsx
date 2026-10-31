@@ -1,17 +1,17 @@
 "use client";
 
-import type { ShopArticle, ShopSectionDefinition } from "@shopvento/ui";
+import {
+  defaultShopProduct,
+  type ShopArticle,
+  type ShopSectionDefinition,
+} from "@shopvento/ui";
 import {
   NewsletterSignup,
   type NewsletterSignupProps,
   ReservationForm,
 } from "@shopvento/ui/forms";
 import { ShopFlow } from "@shopvento/ui/shop-flow";
-import {
-  englishMessages,
-  englishProductPresentation,
-  englishShopCopy,
-} from "@/lib/ui-english";
+import { englishShopCopy } from "@/lib/ui-english";
 import {
   publicApi,
   publicHref,
@@ -34,18 +34,10 @@ const sections: ShopSectionDefinition[] = [
   },
 ];
 
-const images = {
-  regal: "/catalogue.svg",
-  produkte: "/catalogue.svg",
-  gutscheine: "/catalogue.svg",
-  laden: "/catalogue.svg",
-  lieferung: "/catalogue.svg",
-};
 function productPresentation(article: ShopArticle) {
   return {
-    ...englishProductPresentation(article),
+    ...defaultShopProduct(article, {}, { locale: "en-GB" }),
     category: categoryFor(article),
-    placeholder: "gift" as const,
   };
 }
 function categoryFor(article: ShopArticle) {
@@ -62,11 +54,10 @@ export function Commerce({ path }: { path: string }) {
         sections={sections}
         categoryKey={categoryFor}
         productModel={productPresentation}
-        images={images}
         NewsletterComponent={Newsletter}
         {...englishShopCopy}
         routes={{ events: "/events" }}
-        labels={englishMessages}
+        locale="en-GB"
       />
     </div>
   );
@@ -78,7 +69,7 @@ export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
   return (
     <NewsletterSignup
       {...props}
-      labels={englishMessages}
+      locale="en-GB"
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
@@ -92,7 +83,7 @@ export function Reservation() {
   return (
     <ReservationForm
       NewsletterComponent={Newsletter}
-      labels={englishMessages}
+      locale="en-GB"
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       termsEnabled

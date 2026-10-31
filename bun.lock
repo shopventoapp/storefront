@@ -7,7 +7,7 @@
       "dependencies": {
         "@fontsource/bricolage-grotesque": "^5.3.0",
         "@fontsource/source-sans-3": "^5.3.1",
-        "@shopvento/ui": "0.3.0",
+        "@shopvento/ui": "0.4.0",
         "@tailwindcss/postcss": "4",
         "next": "16",
         "react": "19",
@@ -217,7 +217,7 @@
 
     "@poppinss/exception": ["@poppinss/exception@1.2.3", "", {}, "sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw=="],
 
-    "@shopvento/ui": ["@shopvento/ui@0.3.0", "", { "dependencies": { "qrcode-generator": "^2.0.4" }, "peerDependencies": { "react": "^18.2.0 || ^19.0.0", "react-dom": "^18.2.0 || ^19.0.0" } }, "sha512-ylzORIKV6EyDfLjsjYiiZHNhkdmqUHSTC1mv8uVAodCg2i7kHythPHSPog9R/ZvDnLNHJwqxBsv/H83fruqNOg=="],
+    "@shopvento/ui": ["@shopvento/ui@0.4.0", "", { "dependencies": { "qrcode-generator": "^2.0.4" }, "peerDependencies": { "react": "^18.2.0 || ^19.0.0", "react-dom": "^18.2.0 || ^19.0.0" } }, "sha512-ppoA/xMZ1TCqXFUR5B75kdvMBGbvBKC4ZKHk9kASn3VgBLiFaK5nzWB7IG+Fh6cNdUcK4MZgqVzMQG7u+qOIAg=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
 

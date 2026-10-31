@@ -1,4 +1,11 @@
+import { ShopventoProvider } from "@shopvento/ui";
+import {
+  brandingStylesheet,
+  brandingTokens,
+  loadBranding,
+} from "@shopvento/ui/branding";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { RuntimeProvider } from "@/components/runtime";
 import { buildOrigin } from "@/lib/metadata";
@@ -22,13 +29,36 @@ export const metadata: Metadata = {
 const contract =
   "THESIS: Shared time starts with a real upcoming date. OWN-WORLD: Shopvento coral and aubergine, Bricolage Grotesque and Source Sans 3, open programme rows and 14px radii. STORY: Discover a date, book or give an experience, manage it in the account. FIRST VIEWPORT: Large welcome on the left, upcoming programme on the right, clear event action. FORM: open programme, grounded candidate 7, seed 0cb08445. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const branding = process.env.SHOPVENTO_API_URL
+    ? await loadBranding({
+        apiUrl: process.env.SHOPVENTO_API_URL,
+        signal: AbortSignal.timeout(4000),
+      }).catch(() => ({}))
+    : {};
+  const tokens = brandingTokens({
+    "--sv-background": "var(--bg)",
+    "--sv-surface": "var(--surface)",
+    "--sv-surface-2": "var(--surface)",
+    "--sv-text": "var(--ink)",
+    "--sv-text-2": "var(--muted)",
+    "--sv-text-3": "var(--muted)",
+    "--sv-primary": "var(--ink)",
+    "--sv-primary-hover": "var(--muted)",
+    "--sv-on-primary": "var(--surface)",
+    "--sv-accent": "var(--ink)",
+    "--sv-accent-fill": "var(--coral)",
+    "--sv-accent-soft": "var(--soft)",
+    "--sv-font": "var(--body)",
+    "--sv-font-display": "var(--display)",
+    "--sv-font-label": "var(--body)",
+  });
   return (
-    <html lang="en" className="sv-redesign">
+    <html lang="en" className="sv-redesign" style={tokens as CSSProperties}>
       <head>
-        <link rel="stylesheet" href="/branding/theme.css" />
+        <link rel="stylesheet" href={brandingStylesheet} />
       </head>
       <body>
         <div
@@ -39,11 +69,13 @@ export default function RootLayout({
         <a className="skip-link" href="#inhalt">
           Skip to content
         </a>
-        <RuntimeProvider>
-          <SiteHeader />
-          <main id="inhalt">{children}</main>
-          <SiteFooter />
-        </RuntimeProvider>
+        <ShopventoProvider locale="en-GB">
+          <RuntimeProvider initialBranding={branding}>
+            <SiteHeader />
+            <main id="inhalt">{children}</main>
+            <SiteFooter />
+          </RuntimeProvider>
+        </ShopventoProvider>
       </body>
     </html>
   );

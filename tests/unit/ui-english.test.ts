@@ -1,58 +1,47 @@
 import { describe, expect, test } from "bun:test";
 import {
-  defaultBookingLabels,
-  defaultNewsletterLabels,
-  defaultReservationLabels,
-  defaultShopFlowLabels,
-} from "@shopvento/ui";
-import {
-  englishBookingLabels,
+  defaultShopProduct,
   englishMessages,
-  englishProductPresentation,
-  formatEnglishPrice,
-} from "../../src/lib/ui-english";
+  germanMessages,
+  localeMoney,
+  mergeBookingLabels,
+} from "@shopvento/ui";
+import { englishBookingLabels } from "../../src/lib/ui-english";
 import { product, voucher } from "../fixtures/shop";
 
-const placeholders = (value: string) => value.match(/\{\d+\}/g)?.sort() ?? [];
-
-describe("English package overrides", () => {
-  for (const [name, catalogue] of Object.entries({
-    shop: defaultShopFlowLabels,
-    newsletter: defaultNewsletterLabels,
-    reservation: defaultReservationLabels,
-  })) {
-    test(`${name} has complete overrides with preserved runtime placeholders`, () => {
+const placeholders = (value: string) =>
+  Array.from(new Set(value.match(/\{\d+\}/g) ?? [])).sort();
+describe("English package catalogue", () => {
+  for (const [name, catalogue] of Object.entries(germanMessages)) {
+    test(`${name} ships complete translations with preserved runtime placeholders`, () => {
+      const translated = englishMessages[
+        name as keyof typeof englishMessages
+      ] as Record<string, string>;
       for (const key of Object.keys(catalogue)) {
-        expect(englishMessages[key], key).toBeString();
-        expect(englishMessages[key].length, key).toBeGreaterThan(0);
-        expect(placeholders(englishMessages[key]), key).toEqual(
-          placeholders(key),
-        );
+        expect(translated[key], key).toBeString();
+        expect(placeholders(translated[key]), key).toEqual(placeholders(key));
       }
     });
   }
-
-  test("booking overrides cover function-valued copy and plural places", () => {
-    expect(Object.keys(englishBookingLabels).sort()).toEqual(
-      Object.keys(defaultBookingLabels).sort(),
-    );
-    expect(englishBookingLabels.eventVoucherMissing(1)).toBe(
+  test("starter experience terminology retains plural voucher copy", () => {
+    const labels = mergeBookingLabels(englishBookingLabels, { locale: "en" });
+    expect(labels.eventVoucherMissing(1)).toBe(
       "1 place still needs an experience voucher.",
     );
-    expect(englishBookingLabels.eventVoucherMissing(2)).toBe(
+    expect(labels.eventVoucherMissing(2)).toBe(
       "2 places still need an experience voucher.",
     );
   });
-
-  test("product presentation translates package voucher descriptions and unit prices", () => {
-    expect(englishProductPresentation(voucher).subtitle).toBe(
+  test("package product mapping supplies English voucher descriptions and unit prices", () => {
+    expect(defaultShopProduct(voucher, {}, { locale: "en" }).subtitle).toBe(
       "Multi-purpose voucher, redeemable across the entire range",
     );
-    const model = englishProductPresentation({
-      ...product,
-      unit_price: { amount_cents: 123456, unit: "kg" },
-    });
+    const model = defaultShopProduct(
+      { ...product, unit_price: { amount_cents: 123456, unit: "kg" } },
+      {},
+      { locale: "en" },
+    );
     expect(model.unitPrice).toBe("€1,234.56 / kg");
-    expect(formatEnglishPrice(4900)).toBe("€49.00");
+    expect(localeMoney(4900, "en")).toBe("€49.00");
   });
 });

@@ -1,5 +1,5 @@
+import { isShopProxyPath, proxyShopRequest } from "@shopvento/ui/proxy";
 import { shellPath } from "../src/lib/routes";
-import { isShopProxyPath, proxyShopRequest } from "../src/lib/shop-proxy";
 
 // Bind before spawning so an occupied port can never replace another server.
 function availablePort(start: number): number {

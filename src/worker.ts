@@ -1,35 +1,21 @@
+import { loadBranding } from "@shopvento/ui/branding";
+import { isShopProxyPath, proxyShopRequest } from "@shopvento/ui/proxy";
 import { demoName, privatePages, publicPages, shellPath } from "./lib/routes";
-import {
-  instanceOrigin,
-  isShopProxyPath,
-  proxyShopRequest,
-  readSmallJson,
-} from "./lib/shop-proxy";
 
 interface StorefrontEnv extends CloudflareEnv {
   SHOPVENTO_API_URL?: string;
 }
 
 async function brandName(apiUrl?: string): Promise<string> {
-  const origin = instanceOrigin(apiUrl);
-  if (!origin) return demoName;
+  if (!apiUrl) return demoName;
   try {
-    const result = await fetch(new URL("/api/shop/branding", origin), {
-      headers: { Accept: "application/json" },
+    const branding = await loadBranding({
+      apiUrl,
       signal: AbortSignal.timeout(4000),
     });
-    if (!result.ok) return demoName;
-    const value = await readSmallJson(result, 131072);
-    if (
-      value &&
-      typeof value === "object" &&
-      "brand_name" in value &&
-      typeof value.brand_name === "string" &&
-      value.brand_name.trim()
-    )
-      return value.brand_name.trim().slice(0, 255);
+    return branding.brand_name?.slice(0, 255) || demoName;
   } catch {
-    // Branding outages retain the neutral shell without exposing infrastructure.
+    // Branding outages retain the neutral shell.
   }
   return demoName;
 }
