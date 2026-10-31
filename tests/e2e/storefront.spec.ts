@@ -65,17 +65,17 @@ test("product, cart and checkout stay in the package flow", async ({
     .first()
     .click();
   await expect(page).toHaveURL(/\/kasse\/?$/);
-  await page.getByRole("button", { name: "Als Gast fortfahren" }).click();
+  await page.getByRole("button", { name: "Continue as guest" }).click();
   await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
 });
 
-// Account authentication and compact booking copy are fixed German in @shopvento/ui 0.3.0.
+// The package supplies English authentication and booking copy.
 test("customer account opens the package login", async ({ page }) => {
   await page.goto("/konto");
   await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
-  await expect(page.getByLabel("Passwort", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Anmelden/i }).first(),
+    page.getByRole("button", { name: /Sign in/i }).first(),
   ).toBeVisible();
 });
 
@@ -113,12 +113,12 @@ test("account registration and password recovery use package forms", async ({
   page,
 }) => {
   await page.goto("/konto/registrieren");
-  await expect(page.getByLabel(/Vorname/i)).toBeVisible();
-  await expect(page.getByLabel(/Nachname/i)).toBeVisible();
+  await expect(page.getByLabel(/First name/i)).toBeVisible();
+  await expect(page.getByLabel(/Last name/i)).toBeVisible();
   await page.goto("/konto/passwort-vergessen");
   await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Link|Passwort/i }).first(),
+    page.getByRole("button", { name: /Send link|Password/i }).first(),
   ).toBeVisible();
 });
 
@@ -130,7 +130,7 @@ test("email confirmation keeps one-time capabilities out of the address bar", as
   );
   await expect(page).toHaveURL(/\/konto\/email-bestaetigen\?from=mail$/);
   await expect(
-    page.getByRole("button", { name: /bestätigen/i }).first(),
+    page.getByRole("button", { name: /Confirm/i }).first(),
   ).toBeVisible();
   await expect(page.locator("body")).not.toContainText("first-test-capability");
 });
@@ -138,7 +138,7 @@ test("email confirmation keeps one-time capabilities out of the address bar", as
 test("an unauthenticated account deep link opens sign-in", async ({ page }) => {
   await page.goto("/konto/gutscheine");
   await expect(page.getByLabel(/E-?mail/i).first()).toBeVisible();
-  await expect(page.getByLabel("Passwort", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
 });
 
 test("authenticated account uses package details and valid contact navigation", async ({
@@ -147,7 +147,7 @@ test("authenticated account uses package details and valid contact navigation", 
   await mockAccount(page);
   await page.goto("/konto");
   await expect(
-    page.getByRole("heading", { name: "Hallo, Demo." }),
+    page.getByRole("heading", { name: "Hello, Demo." }),
   ).toBeVisible();
   await expect(page.locator('a[href="tel:"]:visible')).toHaveCount(0);
   await expect(page.locator('a[href="mailto:"]:visible')).toHaveCount(0);
@@ -271,7 +271,7 @@ test("account keeps help and an ordinary branding contact link", async ({
   );
   await page.goto("/konto");
   await expect(
-    page.getByRole("heading", { name: "Hallo, Demo." }),
+    page.getByRole("heading", { name: "Hello, Demo." }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Help & contact", exact: true }),
@@ -280,3 +280,59 @@ test("account keeps help and an ordinary branding contact link", async ({
     page.getByRole("link", { name: "Help & contact", exact: true }),
   ).toHaveAttribute("href", "https://example.com/contact");
 });
+
+const germanCopy =
+  /\b(?:Bitte|Deine|Deinen|Deiner|Dein|Buchungsnummer|Gutscheincode|Gutscheine|Anmelden|Abmelden|Passwort|Vorname|Nachname|Plätze|Uhrzeit|Bestellungen|Widerruf|Schließen|Datenschutzerklärung|Buchungsfrist|Ausgebucht|Bestätigt|Abholung|Warenkorb)\b/i;
+for (const width of [1280, 390]) {
+  test(`package flows contain English copy at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    const scenes = [
+      ["booking", "/events?event=1", ".sv-booking select"],
+      ["shop", "/shop", ".sv-shop-product-card"],
+      ["login", "/konto/anmelden", 'input[type="password"]'],
+      ["register", "/konto/registrieren", 'input[name="first_name"]'],
+      ["password-reset", "/konto/passwort-vergessen", 'input[type="email"]'],
+      [
+        "password-set",
+        "/konto/passwort-setzen?token=locale-fixture",
+        'input[type="password"]',
+      ],
+      ["newsletter", "/newsletter", 'input[type="email"]'],
+    ];
+    for (const [name, path, selector] of scenes) {
+      await page.goto(path);
+      await expect(page.locator(selector).first()).toBeVisible();
+      await expect(page.locator("body")).not.toContainText(germanCopy);
+      await page.screenshot({
+        path: testInfo.outputPath(`${name}-${width}.png`),
+        fullPage: true,
+        animations: "disabled",
+      });
+    }
+    await page.goto("/shop/produkte/kraeuter-set");
+    await page
+      .getByRole("button", { name: /Add to (cart|basket)/i })
+      .first()
+      .click();
+    await page.goto("/kasse");
+    await page.getByRole("button", { name: "Continue as guest" }).click();
+    await expect(page.getByLabel(/Email address/i).first()).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(germanCopy);
+    await page.screenshot({
+      path: testInfo.outputPath(`checkout-${width}.png`),
+      fullPage: true,
+      animations: "disabled",
+    });
+    await mockAccount(page);
+    await page.goto("/konto");
+    await expect(page.locator(".sv-account").first()).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(germanCopy);
+    await page.screenshot({
+      path: testInfo.outputPath(`account-${width}.png`),
+      fullPage: true,
+      animations: "disabled",
+    });
+  });
+}

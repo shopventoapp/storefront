@@ -8,7 +8,7 @@ import {
   useAccountSession,
 } from "@shopvento/ui";
 import { useSearchParams } from "next/navigation";
-import { englishBookingFormat, englishBookingLabels } from "@/lib/ui-english";
+import { englishBookingLabels } from "@/lib/ui-english";
 import { bookingClient, publicHref, useBranding } from "./runtime";
 
 const accountClient = createAccountClient();
@@ -64,7 +64,7 @@ export function UpcomingEvents({ compact = false }: { compact?: boolean }) {
     );
   return (
     <DateList
-      format={englishBookingFormat}
+      locale="en"
       windows={compact ? data.windows.slice(0, 3) : data.windows}
       events={data.events}
       locations={data.locations}

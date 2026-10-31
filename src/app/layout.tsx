@@ -1,3 +1,4 @@
+import { ShopventoProvider } from "@shopvento/ui";
 import {
   brandingStylesheet,
   brandingTokens,
@@ -68,11 +69,13 @@ export default async function RootLayout({
         <a className="skip-link" href="#inhalt">
           Skip to content
         </a>
-        <RuntimeProvider initialBranding={branding}>
-          <SiteHeader />
-          <main id="inhalt">{children}</main>
-          <SiteFooter />
-        </RuntimeProvider>
+        <ShopventoProvider locale="en">
+          <RuntimeProvider initialBranding={branding}>
+            <SiteHeader />
+            <main id="inhalt">{children}</main>
+            <SiteFooter />
+          </RuntimeProvider>
+        </ShopventoProvider>
       </body>
     </html>
   );

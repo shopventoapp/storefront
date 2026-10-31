@@ -45,11 +45,11 @@ The starter is **one installation per deployment**. Host-to-installation routing
 
 ## UI language
 
-The starter-owned interface, metadata, legal placeholders and synthetic demo content are in English. EUR is retained, with `en-GB` dates and prices wherever the package exposes a formatter. Stable route paths and API field names remain unchanged.
+The starter-owned interface, metadata, legal placeholders and synthetic demo content are in English. EUR is retained. The package receives `locale="en"` per render for English copy and locale-aware dates, times, prices and numeric date inputs. Stable route paths and API field names remain unchanged.
 
-All package copy overrides are in `src/lib/ui-english.ts`: shop, booking, newsletter, reservation and account domain labels, plus shared English formatting. Edit those dictionaries to switch their text, preserving numbered placeholders and function arguments. Starter editorial copy lives in `src/app`, `src/lib/routes.ts` and the host components. Runtime branding, product content, country names and backend errors come from your installation and must be authored in the desired language there.
+`src/lib/ui-english.ts` retains only starter-specific experience terminology and editorial choices. The package supplies its typed English catalogues. Wrap a route in `ShopventoProvider` to change language; partial `messages` register another catalogue and `labels` override single keys. Starter editorial copy lives in `src/app`, `src/lib/routes.ts` and the host components. Runtime branding, product content, country names and backend errors come from your installation and must be authored in the desired language there.
 
-`@shopvento/ui` 0.4.0 still has fixed German booking/account copy and some fixed date/price formatting with no host locale option. The overrides cannot make those components fully English; upgrade to a package with complete locale support when available, then remove the temporary catalogue file.
+`ShopventoProvider locale="en"` scopes language to the render without changing another visitor's language. German remains the package default. English date inputs accept ISO or `MM/DD/YYYY`; use `en-GB` when day-first numeric input is preferred.
 
 ## Theme and branding
 
