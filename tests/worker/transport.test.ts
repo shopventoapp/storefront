@@ -4,6 +4,13 @@ import { existsSync } from "node:fs";
 let upstream: ReturnType<typeof Bun.serve>;
 let worker: ReturnType<typeof Bun.spawn>;
 let origin: string;
+let platformWorker: ReturnType<typeof Bun.spawn>;
+let platformOrigin: string;
+const edgeSecret = "synthetic-edge-credential";
+const tenantNames: Record<string, string> = {
+  "atelier.shopvento.app": "Atelier A",
+  "bistro.shopvento.app": "Bistro B",
+};
 const fontPath = `/branding/fonts/${"a".repeat(64)}.woff2`;
 const fontBytes = new Uint8Array([119, 79, 70, 50, 1, 2, 3, 4]);
 
@@ -27,11 +34,19 @@ beforeAll(async () => {
     hostname: "127.0.0.1",
     fetch(request) {
       const path = new URL(request.url).pathname;
+      const host = request.headers.get("X-Shopvento-Host");
+      if (
+        host &&
+        (request.headers.get("X-Shopvento-Edge") !== edgeSecret ||
+          request.headers.get("X-Forwarded-Host") !== host)
+      )
+        return new Response(null, { status: 403 });
+      const name = host ? tenantNames[host] : "Testatelier";
       if (path === "/api/shop/branding")
-        return Response.json({ brand_name: "Testatelier" });
+        return Response.json({ brand_name: name });
       if (path === "/branding/theme.css")
         return new Response(
-          `@font-face{font-family:"Test";src:url("${fontPath}") format("woff2")} :root{--brand-primary:#125c5f}`,
+          `@font-face{font-family:"${name}";src:url("${fontPath}") format("woff2")} :root{--brand-primary:#125c5f}`,
           {
             headers: { "Content-Type": "text/css" },
           },
@@ -41,13 +56,22 @@ beforeAll(async () => {
           headers: { "Content-Type": "font/woff2" },
         });
       if (path === "/api/shop/settings")
-        return Response.json({ synthetic: true });
+        return Response.json({
+          synthetic: true,
+          ...(host ? { host, name } : {}),
+        });
       return Response.json({ detail: "Not found" }, { status: 404 });
     },
   });
+  ({ origin, worker } = await startWorker());
+  ({ origin: platformOrigin, worker: platformWorker } =
+    await startWorker(true));
+}, 65000);
+
+async function startWorker(multiTenant = false) {
   const port = availablePort();
-  origin = `http://127.0.0.1:${port}`;
-  worker = Bun.spawn(
+  const localOrigin = `http://127.0.0.1:${port}`;
+  const localWorker = Bun.spawn(
     [
       "bunx",
       "wrangler",
@@ -61,6 +85,14 @@ beforeAll(async () => {
       String(availablePort()),
       "--var",
       `SHOPVENTO_API_URL:http://127.0.0.1:${upstream.port}`,
+      ...(multiTenant
+        ? [
+            "--var",
+            "STOREFRONT_MULTI_TENANT:true",
+            "--var",
+            `STOREFRONT_EDGE_SECRET:${edgeSecret}`,
+          ]
+        : []),
       "--show-interactive-dev-session=false",
       "--log-level",
       "error",
@@ -74,19 +106,23 @@ beforeAll(async () => {
   const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(`${origin}/robots.txt`);
-      if (response.ok) return;
+      const response = await fetch(`${localOrigin}/robots.txt`);
+      if (response.ok) return { origin: localOrigin, worker: localWorker };
     } catch {
       /* Wait for the local workerd runtime. */
     }
     await Bun.sleep(200);
   }
+  localWorker.kill();
+  await localWorker.exited;
   throw new Error("Local Worker did not become ready");
-}, 35000);
+}
 
 afterAll(async () => {
   worker?.kill();
+  platformWorker?.kill();
   if (worker) await worker.exited;
+  if (platformWorker) await platformWorker.exited;
   upstream?.stop(true);
 });
 
@@ -162,4 +198,32 @@ test("relative font-face URLs load through the read-only same-origin font route"
   expect(rejected.status).toBe(405);
   const unknown = await fetch(`${origin}/branding/fonts/not-a-font.woff2`);
   expect(unknown.status).toBe(404);
+});
+
+test("workerd isolates tenant metadata, theme assets and proxy identity", async () => {
+  await Promise.all(
+    Object.entries(tenantNames).map(async ([host, name]) => {
+      const headers = {
+        Host: host,
+        "X-Shopvento-Host": "forged.example",
+        "X-Shopvento-Edge": "forged",
+      };
+      const response = await fetch(`${platformOrigin}/events`, { headers });
+      const html = await response.text();
+      expect(response.status).toBe(200);
+      expect(html).toContain(`Experiences &amp; dates | ${name}`);
+      expect(html.includes(`href="http://${host}/events/"`)).toBe(true);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(html).not.toContain(edgeSecret);
+      const settings = await fetch(`${platformOrigin}/api/shop/settings`, {
+        headers,
+      });
+      expect(await settings.json()).toEqual({ synthetic: true, host, name });
+      const css = await fetch(`${platformOrigin}/branding/theme.css`, {
+        headers,
+      });
+      expect(await css.text()).toContain(`font-family:"${name}"`);
+      expect(css.headers.get("Cache-Control")).toBe("no-store");
+    }),
+  );
 });

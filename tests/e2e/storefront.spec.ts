@@ -6,6 +6,9 @@ import {
   mockShop,
 } from "../fixtures/shop";
 
+const demoGreeting =
+  /^(?:Hello|Good morning|Good afternoon|Good evening), Demo\.$/;
+
 test.beforeEach(async ({ page }) => {
   await mockShop(page);
 });
@@ -151,9 +154,7 @@ test("authenticated account uses package details and valid contact navigation", 
 }) => {
   await mockAccount(page);
   await page.goto("/konto");
-  await expect(
-    page.getByRole("heading", { name: "Hello, Demo." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: demoGreeting })).toBeVisible();
   await expect(page.locator('a[href="tel:"]:visible')).toHaveCount(0);
   await expect(page.locator('a[href="mailto:"]:visible')).toHaveCount(0);
   await page.goto("/konto/buchungen/o-order-demo");
@@ -275,9 +276,7 @@ test("account keeps help and an ordinary branding contact link", async ({
     }),
   );
   await page.goto("/konto");
-  await expect(
-    page.getByRole("heading", { name: "Hello, Demo." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: demoGreeting })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Help & contact", exact: true }),
   ).toBeVisible();

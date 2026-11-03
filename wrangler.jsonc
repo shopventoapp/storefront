@@ -14,5 +14,20 @@
     "enabled": true,
     "logs": { "invocation_logs": false }
   },
-  "keep_vars": true
+  "keep_vars": true,
+  "vars": { "STOREFRONT_MULTI_TENANT": "false" },
+  // Opt-in platform configuration only. No route or secret is added to a
+  // single-installation deployment. Provision DNS and secrets separately.
+  "env": {
+    "platform": {
+      "vars": { "STOREFRONT_MULTI_TENANT": "true" },
+      // Platform route placeholder; activate only for the shared deployment.
+      "routes": [
+        { "pattern": "*.shopvento.app/*", "zone_name": "shopvento.app" }
+      ],
+      // Binding name only, never put the value in this file. The matching
+      // backend infrastructure secret must be configured before activation.
+      "secrets": { "required": ["STOREFRONT_EDGE_SECRET"] }
+    }
+  }
 }
