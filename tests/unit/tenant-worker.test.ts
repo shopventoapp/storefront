@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import { demoName } from "../../src/lib/routes";
 import { tenantTransport } from "../../src/lib/tenant-transport";
 import worker from "../../src/worker";
 
@@ -42,6 +43,173 @@ function fakeFetch(
 }
 
 describe("multi-tenant Worker", () => {
+  test("an edge secret without the exact platform flag fails closed on every route", async () => {
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(async () => {
+        throw new Error("Must not fetch");
+      }),
+    );
+    for (const flag of [undefined, "", "false", "TRUE"]) {
+      const env = { ...environment(), STOREFRONT_MULTI_TENANT: flag };
+      const assets = spyOn(env.ASSETS, "fetch");
+      for (const path of [
+        "/events",
+        "/api/shop/settings",
+        "/branding/theme.css",
+        fontPath,
+        "/gutscheine",
+        "/robots.txt",
+      ]) {
+        const response = await worker.fetch(
+          new Request(`https://atelier.shopvento.app${path}`),
+          env as ReturnType<typeof environment>,
+        );
+        expect(response.status).toBe(503);
+        expect(response.headers.get("Cache-Control")).toBe("no-store");
+      }
+      expect(assets).not.toHaveBeenCalled();
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(
+      tenantTransport(new Request("https://single.example"), {
+        STOREFRONT_EDGE_SECRET: "",
+      }),
+    ).toBeNull();
+  });
+
+  test("unknown and suspended tenants receive a standalone uncached 404 without demo branding", async () => {
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(async (input, init) => {
+        const outgoing = new Request(input, init);
+        expect(new URL(outgoing.url).pathname).toBe("/api/shop/branding");
+        return Response.json({ detail: "Not found" }, { status: 404 });
+      }),
+    );
+    for (const host of ["unknown.shopvento.app", "suspended.shopvento.app"]) {
+      const response = await worker.fetch(
+        new Request(`https://${host}/events`),
+        environment(),
+      );
+      expect(response.status).toBe(404);
+      expect(response.headers.get("Content-Type")).toContain("text/html");
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(response.headers.get("CDN-Cache-Control")).toBe("no-store");
+      expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+      const body = await response.text();
+      expect(body).toContain("Storefront not found");
+      expect(body).not.toContain(demoName);
+      expect(body).not.toContain("<script");
+    }
+  });
+
+  test("single-installation branding failures still retain the demo shell", async () => {
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(async () => new Response(null, { status: 404 })),
+    );
+    const response = await worker.fetch(
+      new Request("https://single.example/events"),
+      {
+        ...environment(),
+        STOREFRONT_MULTI_TENANT: "false",
+        STOREFRONT_EDGE_SECRET: undefined,
+      },
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain(demoName);
+  });
+
+  test("reservation creation forwards the exact bare public path, body and trusted tenant headers", async () => {
+    const body = JSON.stringify({
+      franchise_location_id: 1,
+      num_guests: 2,
+      date: "2099-11-03",
+      time: "19:00",
+    });
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(async (input, init) => {
+        const outgoing = new Request(input, init);
+        expect(outgoing.url).toBe(`${apiUrl}/api/table-reservations/public`);
+        expect(outgoing.method).toBe("POST");
+        expect(outgoing.headers.get("X-Shopvento-Host")).toBe(
+          "atelier.shopvento.app",
+        );
+        expect(outgoing.headers.get("X-Shopvento-Edge")).toBe(secret);
+        expect(await outgoing.text()).toBe(body);
+        return Response.json({ id: 42 }, { status: 201 });
+      }),
+    );
+    const response = await worker.fetch(
+      new Request(
+        "https://atelier.shopvento.app/api/table-reservations/public",
+        {
+          method: "POST",
+          headers: {
+            Origin: "https://atelier.shopvento.app",
+            "Content-Type": "application/json",
+          },
+          body,
+        },
+      ),
+      environment(),
+    );
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ id: 42 });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("payment status stays tenant scoped and uncached", async () => {
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(async (input, init) => {
+        const outgoing = new Request(input, init);
+        expect(new URL(outgoing.url).pathname).toBe(
+          "/api/shop/payments/status",
+        );
+        expect(outgoing.headers.get("X-Shopvento-Host")).toBe(
+          "atelier.shopvento.app",
+        );
+        expect(outgoing.headers.get("X-Shopvento-Edge")).toBe(secret);
+        return Response.json({
+          online_payments_enabled: false,
+          checkout_label: "Bald verfügbar",
+        });
+      }),
+    );
+    const response = await worker.fetch(
+      new Request("https://atelier.shopvento.app/api/shop/payments/status"),
+      environment(),
+    );
+    expect(await response.json()).toEqual({
+      online_payments_enabled: false,
+      checkout_label: "Bald verfügbar",
+    });
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("CDN-Cache-Control")).toBe("no-store");
+  });
+
+  test("upstream redirects return to the requesting tenant host", async () => {
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(
+        async () =>
+          new Response(null, {
+            status: 302,
+            statusText: "Found",
+            headers: { Location: `${apiUrl}/buchung?reference=synthetic` },
+          }),
+      ),
+    );
+    for (const host of Object.keys(names)) {
+      const response = await worker.fetch(
+        new Request(`https://${host}/api/shop/stripe/success`),
+        environment(),
+      );
+      expect(response.status).toBe(302);
+      expect(response.statusText).toBe("Found");
+      expect(response.headers.get("Location")).toBe(
+        `https://${host}/buchung?reference=synthetic`,
+      );
+    }
+  });
+
   test("interleaved hosts receive their own branding, assets and trusted proxy headers", async () => {
     const seen: { host: string; path: string }[] = [];
     mockFetch = spyOn(globalThis, "fetch").mockImplementation(

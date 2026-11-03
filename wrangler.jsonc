@@ -20,8 +20,11 @@
   // single-installation deployment. Provision DNS and secrets separately.
   "env": {
     "platform": {
+      "workers_dev": false,
+      "preview_urls": false,
       "vars": { "STOREFRONT_MULTI_TENANT": "true" },
       // Platform route placeholder; activate only for the shared deployment.
+      // Also provision app.shopvento.app/* with no Worker to bypass this route.
       "routes": [
         { "pattern": "*.shopvento.app/*", "zone_name": "shopvento.app" }
       ],

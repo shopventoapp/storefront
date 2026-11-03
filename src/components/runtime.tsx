@@ -3,6 +3,10 @@
 import { createBookingClient, useAccountResource } from "@shopvento/ui";
 import { type Branding, loadBranding } from "@shopvento/ui/branding";
 import { createContext, useContext, useEffect, useState } from "react";
+import {
+  loadPaymentStatus,
+  type PublicPaymentStatus,
+} from "@/lib/payment-status";
 import { demoName, privatePages, publicPages, shellPath } from "@/lib/routes";
 
 export const bookingClient = createBookingClient({
@@ -14,6 +18,19 @@ export type { Branding } from "@shopvento/ui/branding";
 
 const BrandContext = createContext<Branding>({});
 export const useBranding = () => useContext(BrandContext);
+const PaymentContext = createContext<PublicPaymentStatus | null>(null);
+export const usePaymentStatus = () => useContext(PaymentContext);
+
+export function PaymentAvailability() {
+  const status = usePaymentStatus();
+  if (status?.online_payments_enabled !== false) return null;
+  return (
+    <p className="state" role="status">
+      Card payments: <span lang="de">Bald verfügbar</span>. Voucher-only
+      redemption and free reservations remain available.
+    </p>
+  );
+}
 
 export function publicHref(value: string | undefined, fallback: string) {
   if (!value) return fallback;
@@ -35,6 +52,7 @@ export function RuntimeProvider({
   initialBranding?: Branding;
 }) {
   const [branding, setBranding] = useState<Branding>(initialBranding);
+  const { data: payments } = useAccountResource(loadPaymentStatus);
   useEffect(() => {
     const controller = new AbortController();
     loadBranding({ signal: controller.signal })
@@ -91,7 +109,11 @@ export function RuntimeProvider({
     observer.observe(document.head, { childList: true });
     return () => observer.disconnect();
   }, [branding]);
-  return <BrandContext value={branding}>{children}</BrandContext>;
+  return (
+    <BrandContext value={branding}>
+      <PaymentContext value={payments ?? null}>{children}</PaymentContext>
+    </BrandContext>
+  );
 }
 
 export function BrandName() {

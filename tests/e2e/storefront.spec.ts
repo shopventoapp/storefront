@@ -39,6 +39,29 @@ test("event booking starts in the package form", async ({ page }) => {
   await expect(page.locator(".sv-booking select").first()).toBeVisible();
 });
 
+test("inactive card payments show availability without blocking voucher browsing or free reservations", async ({
+  page,
+}) => {
+  await page.route("**/api/shop/payments/status", (route) =>
+    route.fulfill({
+      json: {
+        online_payments_enabled: false,
+        checkout_label: "Bald verfügbar",
+      },
+    }),
+  );
+  for (const path of ["/shop", "/events?event=1"]) {
+    await page.goto(path);
+    await expect(
+      page.getByText("Bald verfügbar", { exact: true }),
+    ).toBeVisible();
+  }
+  await page.goto("/gutscheine");
+  await expect(page.locator('a[href*="zeit-gutschein"]').first()).toBeVisible();
+  await page.goto("/reservierung");
+  await expect(page.getByRole("button", { name: "Reserve now" })).toBeEnabled();
+});
+
 test("vouchers use the package catalogue", async ({ page }) => {
   await page.goto("/gutscheine");
   await expect(page.getByText("Give time together").first()).toBeVisible();

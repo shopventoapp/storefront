@@ -42,6 +42,8 @@ beforeAll(async () => {
       )
         return new Response(null, { status: 403 });
       const name = host ? tenantNames[host] : "Testatelier";
+      if (host && !name)
+        return Response.json({ detail: "Not found" }, { status: 404 });
       if (path === "/api/shop/branding")
         return Response.json({ brand_name: name });
       if (path === "/branding/theme.css")
@@ -226,4 +228,18 @@ test("workerd isolates tenant metadata, theme assets and proxy identity", async 
       expect(css.headers.get("Cache-Control")).toBe("no-store");
     }),
   );
+});
+
+test("workerd returns a standalone 404 for unknown or suspended storefronts", async () => {
+  for (const host of ["unknown.shopvento.app", "suspended.shopvento.app"]) {
+    const response = await fetch(`${platformOrigin}/events`, {
+      headers: { Host: host },
+    });
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    const html = await response.text();
+    expect(html).toContain("Storefront not found");
+    expect(html).not.toContain("Nebenan Atelier");
+    expect(html).not.toContain("<script");
+  }
 });

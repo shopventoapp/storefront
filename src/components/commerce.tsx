@@ -13,6 +13,7 @@ import {
 import { ShopFlow } from "@shopvento/ui/shop-flow";
 import { englishShopCopy } from "@/lib/ui-english";
 import {
+  PaymentAvailability,
   publicApi,
   publicHref,
   useBranding,
@@ -48,6 +49,7 @@ function categoryFor(article: ShopArticle) {
 export function Commerce({ path }: { path: string }) {
   return (
     <div className="wrap commerce">
+      <PaymentAvailability />
       <ShopFlow
         key={path}
         initialPath={path}

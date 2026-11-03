@@ -19,7 +19,8 @@ export function tenantTransport(
     apiUrl: env.SHOPVENTO_API_URL,
     trustVisitorIp: true,
   };
-  if (env.STOREFRONT_MULTI_TENANT !== "true") return options;
+  if (env.STOREFRONT_MULTI_TENANT !== "true")
+    return env.STOREFRONT_EDGE_SECRET !== undefined ? null : options;
 
   const upstream = instanceOrigin(env.SHOPVENTO_API_URL);
   const secret = env.STOREFRONT_EDGE_SECRET;
