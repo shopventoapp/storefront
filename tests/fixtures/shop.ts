@@ -161,6 +161,11 @@ export async function mockShop(page: Page) {
       route.fulfill({ json: body, status });
     if (path === "/api/shop/branding") return json(branding);
     if (path === "/api/shop/settings") return json(settings);
+    if (path === "/api/shop/payments/status")
+      return json({
+        online_payments_enabled: true,
+        checkout_label: "Zur Zahlung",
+      });
     if (path === "/api/shop/tastings") return json([event]);
     if (path === "/api/shop/tastings/locations") {
       return json({

@@ -9,7 +9,12 @@ import {
 } from "@shopvento/ui";
 import { useSearchParams } from "next/navigation";
 import { englishBookingLabels } from "@/lib/ui-english";
-import { bookingClient, publicHref, useBranding } from "./runtime";
+import {
+  bookingClient,
+  PaymentAvailability,
+  publicHref,
+  useBranding,
+} from "./runtime";
 
 const accountClient = createAccountClient();
 
@@ -101,6 +106,7 @@ export function EventsPage() {
       </div>
       {eventId ? (
         <div className="booking-area">
+          <PaymentAvailability />
           <a className="text-link" href="/events">
             View all experiences
           </a>

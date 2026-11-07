@@ -6,6 +6,9 @@ import {
   mockShop,
 } from "../fixtures/shop";
 
+const demoGreeting =
+  /^(?:Hello|Good morning|Good afternoon|Good evening), Demo\.$/;
+
 test.beforeEach(async ({ page }) => {
   await mockShop(page);
 });
@@ -34,6 +37,29 @@ test("event booking starts in the package form", async ({ page }) => {
   await expect(page.locator(".sv-booking")).toBeVisible();
   await expect(page.getByText("Herb workshop").first()).toBeVisible();
   await expect(page.locator(".sv-booking select").first()).toBeVisible();
+});
+
+test("inactive card payments show availability without blocking voucher browsing or free reservations", async ({
+  page,
+}) => {
+  await page.route("**/api/shop/payments/status", (route) =>
+    route.fulfill({
+      json: {
+        online_payments_enabled: false,
+        checkout_label: "Bald verfügbar",
+      },
+    }),
+  );
+  for (const path of ["/shop", "/events?event=1"]) {
+    await page.goto(path);
+    await expect(
+      page.getByText("Bald verfügbar", { exact: true }),
+    ).toBeVisible();
+  }
+  await page.goto("/gutscheine");
+  await expect(page.locator('a[href*="zeit-gutschein"]').first()).toBeVisible();
+  await page.goto("/reservierung");
+  await expect(page.getByRole("button", { name: "Reserve now" })).toBeEnabled();
 });
 
 test("vouchers use the package catalogue", async ({ page }) => {
@@ -151,9 +177,7 @@ test("authenticated account uses package details and valid contact navigation", 
 }) => {
   await mockAccount(page);
   await page.goto("/konto");
-  await expect(
-    page.getByRole("heading", { name: "Hello, Demo." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: demoGreeting })).toBeVisible();
   await expect(page.locator('a[href="tel:"]:visible')).toHaveCount(0);
   await expect(page.locator('a[href="mailto:"]:visible')).toHaveCount(0);
   await page.goto("/konto/buchungen/o-order-demo");
@@ -275,9 +299,7 @@ test("account keeps help and an ordinary branding contact link", async ({
     }),
   );
   await page.goto("/konto");
-  await expect(
-    page.getByRole("heading", { name: "Hello, Demo." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: demoGreeting })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Help & contact", exact: true }),
   ).toBeVisible();

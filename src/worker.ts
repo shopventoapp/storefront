@@ -1,20 +1,32 @@
 import { loadBranding } from "@shopvento/ui/branding";
 import { isShopProxyPath, proxyShopRequest } from "@shopvento/ui/proxy";
 import { demoName, privatePages, publicPages, shellPath } from "./lib/routes";
+import { tenantTransport } from "./lib/tenant-transport";
 
 interface StorefrontEnv extends CloudflareEnv {
   SHOPVENTO_API_URL?: string;
 }
 
-async function brandName(apiUrl?: string): Promise<string> {
+async function brandName(
+  apiUrl?: string,
+  fetcher?: typeof fetch,
+  multiTenant = false,
+): Promise<string | null> {
   if (!apiUrl) return demoName;
+  let notFound = false;
   try {
     const branding = await loadBranding({
       apiUrl,
+      fetcher: (async (input, init) => {
+        const response = await (fetcher ?? fetch)(input, init);
+        notFound = response.status === 404;
+        return response;
+      }) as typeof fetch,
       signal: AbortSignal.timeout(4000),
     });
     return branding.brand_name?.slice(0, 255) || demoName;
   } catch {
+    if (multiTenant && notFound) return null;
     // Branding outages retain the neutral shell.
   }
   return demoName;
@@ -52,6 +64,12 @@ function xmlEscape(value: string): string {
 export default {
   async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
     const url = new URL(request.url);
+    const transport = tenantTransport(request, env);
+    if (!transport)
+      return Response.json(
+        { detail: "Storefront unavailable" },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
     if (url.pathname.replace(/\/$/, "") === "/gutscheine") {
       return Response.redirect(
         new URL(`/shop/gutscheine${url.search}`, request.url),
@@ -59,10 +77,7 @@ export default {
       );
     }
     if (isShopProxyPath(url.pathname))
-      return proxyShopRequest(request, {
-        apiUrl: env.SHOPVENTO_API_URL,
-        trustVisitorIp: true,
-      });
+      return proxyShopRequest(request, transport);
     if (url.pathname.startsWith("/api/"))
       return Response.json({ detail: "Not found" }, { status: 404 });
     if (url.pathname === "/robots.txt") {
@@ -109,7 +124,26 @@ export default {
       status: result.status,
       headers,
     });
-    const name = await brandName(env.SHOPVENTO_API_URL);
+    const name = await brandName(
+      transport.apiUrl,
+      transport.fetcher,
+      env.STOREFRONT_MULTI_TENANT === "true",
+    );
+    if (name === null) {
+      await response.body?.cancel();
+      return new Response(
+        '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Storefront not found</title><h1>Storefront not found</h1><p>This storefront is unavailable.</p></html>',
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-store",
+            "CDN-Cache-Control": "no-store",
+            "X-Robots-Tag": "noindex, nofollow",
+          },
+        },
+      );
+    }
     const page =
       [...publicPages, ...privatePages].find(
         (item) => item.path === url.pathname.replace(/\/$/, ""),

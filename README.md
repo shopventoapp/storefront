@@ -27,7 +27,7 @@ The development wrapper selects a free port from **3100** and starts its interna
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SHOPVENTO_API_URL` | Server-only HTTPS installation origin, without `/api`, a path, credentials, query or fragment. HTTP loopback origins are accepted for local backend development. |
 
-This is the only installation setting. Keep `.env.local` and `.dev.vars` out of version control. Do not prefix it with `NEXT_PUBLIC_` and do not put API tokens into the site. Authentication uses the backend's first-party HttpOnly cookie through the proxy.
+This is the only setting needed for a single installation. Keep `.env.local` and `.dev.vars` out of version control. Do not prefix it with `NEXT_PUBLIC_` and do not put API tokens into the site. Authentication uses the backend's first-party HttpOnly cookie through the proxy.
 
 Use the same variable in Cloudflare's Worker settings. The deployment config deliberately omits the binding so dashboard-managed values survive redeploys. The local example starts empty. Configure your backend's allowed storefront origin and payment return paths to match the deployed site: booking success uses `/buchung` and cancellation `/buchung?outcome=cancel`; shop success uses `/kasse/erfolg`, cancellation `/kasse/abgebrochen`. Backend settings remain authoritative for payment, booking availability, guest checkout and public Turnstile challenge keys. Reservation setup needs a published location. The host chooses the first reservation-enabled public location, falling back to the first public location.
 
@@ -41,7 +41,32 @@ The starter groups all physical articles into “Products” and vouchers into �
 
 The Worker serves the static Next.js export from `out/`, sends shop product paths to the shared shop shell, and generates origin-correct robots and sitemap responses. It adapts page titles, canonical links and Open Graph metadata to the request origin and runtime `brand_name`. Private account, cart, checkout and return pages are excluded from the sitemap and carry no-index headers.
 
-The starter is **one installation per deployment**. Host-to-installation routing and editable content pages are separate features. Event/product content is loaded by the package in the browser; the static shell provides page-level metadata, rather than a server-rendered catalogue.
+The default is **one installation per deployment**. The optional platform Worker serves multiple tenant hosts as described below. Event/product content is loaded by the package in the browser; the static shell provides page-level metadata, rather than a server-rendered catalogue.
+
+### Shared platform Worker
+
+`wrangler.jsonc` contains an opt-in `platform` environment with the `*.shopvento.app/*` route and the required `STOREFRONT_EDGE_SECRET` binding name. These are configuration placeholders for the shared deployment; DNS, routing and secret provisioning are separate infrastructure steps. Default deployments have no wildcard route and need no edge secret.
+
+For the platform environment, `SHOPVENTO_API_URL` must be a dedicated edge host owned by no tenant, for example `https://edge.shopvento.cloud`. Never use a tenant back office host: a missing or invalid edge credential must resolve to no tenant. Reserve the `edge` slug permanently at signup, along with `app` and `www`. The Worker, Caddy and backend share one infrastructure secret; rotate it by deploying all three together. A partial rotation interrupts tenant requests.
+
+Before activating the wildcard route, provision the more specific Cloudflare route `app.shopvento.app/*` with **no Worker**. This lets platform signup, Stripe Connect webhooks and platform API traffic reach Caddy instead of the storefront. The platform environment disables `workers.dev` and preview URLs so the tenant route is the only entry point. These routing changes are infrastructure prerequisites, not actions performed by this repository.
+
+`STOREFRONT_MULTI_TENANT=true` enables tenant routing; its default is `false`. Select the `platform` Wrangler environment for shared Worker operations. Platform builds must also set `STOREFRONT_MULTI_TENANT=true` so the static export stays neutral and never embeds one installation's branding. For local verification, put only `STOREFRONT_EDGE_SECRET` in an ignored `.dev.vars.platform` and pass the backend origin as a variable (adjust the example port to your local backend):
+
+```sh
+STOREFRONT_MULTI_TENANT=true bun run build
+bunx wrangler dev --env platform --local --port 8787 --var SHOPVENTO_API_URL:http://127.0.0.1:8000
+```
+
+The Worker derives the tenant hostname from the request URL, then sends `X-Shopvento-Host`, `X-Forwarded-Host` and `X-Shopvento-Edge` on every allowed upstream request, including runtime branding, theme CSS, fonts, media and public reservations. Visitor-supplied tenant headers never select the tenant. The backend validates the secret and resolves only registered active storefront domains. It must allow trusted edge traffic for the existing `/api/shop/*`, `/branding/theme.css`, `/branding/fonts/*` and public reservation routes.
+
+Missing platform configuration returns 503 before contacting the backend. A configured edge secret also requires the exact `STOREFRONT_MULTI_TENANT=true` flag; losing the flag fails closed. A 404 from the backend public branding setup, including unknown or suspended tenant domains, returns a standalone 404 page without the demo brand or client scripts. Upstream requests use manual redirects and bypass caching; HTML and proxied tenant responses stay `no-store`. There is no shared branding cache or Cache API usage. Any future tenant cache must include the normalized storefront host in its key, including when the upstream URL is identical for multiple tenants. Client branding and assets continue through same-origin URLs, so each host uses its own backend setup.
+
+### Payment availability
+
+The runtime reads the same-origin `GET /api/shop/payments/status` response without caching and exposes `online_payments_enabled` through `usePaymentStatus()`. When it is false, catalogue/checkout and event booking surfaces show the label "Bald verfügbar" for card payments. Free table reservations and voucher browsing remain usable.
+
+`@shopvento/ui` 0.4.0 owns the final checkout and booking actions and has no payment-availability props. It still needs to consume this status, disable paid actions with "Bald verfügbar" while payments are inactive, and permit voucher-only redemption and free bookings based on the backend quote's remaining amount. Its global `paused` option is too broad for this rule. The host notices do not disable those package buttons; the backend payment gate remains authoritative until the package supports this capability. Treat loading, failed and malformed status as unknown when adding that gate. Do not activate paid platform flows before that package update.
 
 ## UI language
 

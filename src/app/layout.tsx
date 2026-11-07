@@ -32,12 +32,14 @@ const contract =
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const branding = process.env.SHOPVENTO_API_URL
-    ? await loadBranding({
-        apiUrl: process.env.SHOPVENTO_API_URL,
-        signal: AbortSignal.timeout(4000),
-      }).catch(() => ({}))
-    : {};
+  const branding =
+    process.env.SHOPVENTO_API_URL &&
+    process.env.STOREFRONT_MULTI_TENANT !== "true"
+      ? await loadBranding({
+          apiUrl: process.env.SHOPVENTO_API_URL,
+          signal: AbortSignal.timeout(4000),
+        }).catch(() => ({}))
+      : {};
   const tokens = brandingTokens({
     "--sv-background": "var(--bg)",
     "--sv-surface": "var(--surface)",
