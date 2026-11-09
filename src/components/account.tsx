@@ -19,6 +19,7 @@ import {
   createAccountClient,
   createDashboardClient,
   type DashboardProps,
+  defaultAccountLabels,
   EmailChangeConfirm,
   EmailVerify,
   LoginForm,
@@ -31,6 +32,7 @@ import {
   useAccountSession,
 } from "@shopvento/ui";
 import { useEffect, useRef, useState } from "react";
+import { platformMode } from "@/lib/platform";
 import { englishAccountLabels, englishAccountNotice } from "@/lib/ui-english";
 import {
   bookingClient,
@@ -91,7 +93,18 @@ export function AccountPage() {
   const loginProps = { client: account, loginUrl: "/konto/anmelden" };
   return (
     <section className="account-page">
-      <h1>{form}</h1>
+      <h1>
+        {platformMode
+          ? {
+              registrieren: "Konto erstellen",
+              "passwort-vergessen": "Passwort vergessen?",
+              "passwort-setzen": "Dein neues Passwort",
+              "email-bestaetigen": "E-Mail bestätigen",
+              "email-aendern": "Neue E-Mail bestätigen",
+              anmelden: "Dein Konto",
+            }[kind]
+          : form}
+      </h1>
       {kind === "anmelden" && <SignIn />}
       {kind === "registrieren" && (
         <RegisterForm
@@ -152,16 +165,28 @@ function AccountDashboard({ path }: { path: string }) {
   if (!session.profile)
     return (
       <section className="account-page">
-        <h1>Good to see you.</h1>
-        <p>Find your bookings, orders and vouchers here.</p>
-        <SignIn notice={session.error ? englishAccountNotice : undefined} />
+        <h1>{platformMode ? "Dein Konto" : "Good to see you."}</h1>
+        <p>
+          {platformMode
+            ? "Hier findest Du Deine Buchungen, Bestellungen und Gutscheine."
+            : "Find your bookings, orders and vouchers here."}
+        </p>
+        <SignIn
+          notice={
+            session.error
+              ? platformMode
+                ? "Bitte melde Dich an, um Dein Konto zu öffnen."
+                : englishAccountNotice
+              : undefined
+          }
+        />
       </section>
     );
   const props: DashboardProps = {
     client: dashboard,
     profile: session.profile,
     routes,
-    labels: englishAccountLabels,
+    labels: platformMode ? defaultAccountLabels : englishAccountLabels,
     help,
   };
   const section = path.split("/")[2] ?? "";
@@ -180,7 +205,11 @@ function AccountDashboard({ path }: { path: string }) {
       await session.logout();
       window.location.assign("/konto/anmelden");
     } catch {
-      setLogoutError("We could not sign you out. Please try again.");
+      setLogoutError(
+        platformMode
+          ? "Abmelden ist gerade nicht möglich. Bitte versuche es erneut."
+          : "We could not sign you out. Please try again.",
+      );
     }
   }
   return (
@@ -195,7 +224,9 @@ function AccountDashboard({ path }: { path: string }) {
         {logoutError && <p role="alert">{logoutError}</p>}
         {!contact.startsWith("tel:") && !contact.startsWith("mailto:") && (
           <p>
-            <a href={contact}>Help & contact</a>
+            <a href={contact}>
+              {platformMode ? "Hilfe und Kontakt" : "Help & contact"}
+            </a>
           </p>
         )}
         {active === "overview" && <AccountOverview {...props} />}
@@ -301,7 +332,7 @@ function EntryDetail(props: DashboardProps & { id: string }) {
 function AccountLoading() {
   return (
     <p className="state" role="status">
-      Loading your account …
+      {platformMode ? "Dein Konto wird geladen …" : "Loading your account …"}
     </p>
   );
 }

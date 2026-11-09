@@ -19,7 +19,7 @@ cp .env.example .env.local
 bun run dev
 ```
 
-The development wrapper selects a free port from **3100** and starts its internal Next.js server on a free port from **3200**. Open the URL it prints. API calls stay on the storefront origin; the server reads the upstream setting. With an empty setting the editorial shell works and connected surfaces show their package loading/error states. The browser tests mock the API and need no installation.
+The development wrapper selects a free port from **3100** (or the port in `PLAYWRIGHT_BASE_URL` when set) and starts its internal Next.js server on a free port from **3200**. Open the URL it prints. API calls stay on the storefront origin; the server reads the upstream setting. With an empty setting the editorial shell works and connected surfaces show their package loading/error states. The browser tests mock the API and need no installation.
 
 ## Configuration
 
@@ -37,7 +37,7 @@ Use the same variable in Cloudflare's Worker settings. The deployment config del
 
 `/gutscheine` redirects to the package's `/shop/gutscheine` category. Product and account detail paths use their static route shells. The local catalogue artwork is illustrative; product photography comes from the API.
 
-The starter groups all physical articles into “Products” and vouchers into “Vouchers”, including installations with custom category slugs. Change the two presentation adapters and section list in `src/components/commerce.tsx` together to expose a different taxonomy.
+The English single-installation starter groups all physical articles into “Products” and vouchers into “Vouchers”, including installations with custom category slugs. Change the two presentation adapters and section list in `src/components/commerce.tsx` together to expose a different taxonomy.
 
 The Worker serves the static Next.js export from `out/`, sends shop product paths to the shared shop shell, and generates origin-correct robots and sitemap responses. It adapts page titles, canonical links and Open Graph metadata to the request origin and runtime `brand_name`. Private account, cart, checkout and return pages are excluded from the sitemap and carry no-index headers.
 
@@ -62,6 +62,14 @@ The Worker derives the tenant hostname from the request URL, then sends `X-Shopv
 
 Missing platform configuration returns 503 before contacting the backend. A configured edge secret also requires the exact `STOREFRONT_MULTI_TENANT=true` flag; losing the flag fails closed. A 404 from the backend public branding setup, including unknown or suspended tenant domains, returns a standalone 404 page without the demo brand or client scripts. Upstream requests use manual redirects and bypass caching; HTML and proxied tenant responses stay `no-store`. There is no shared branding cache or Cache API usage. Any future tenant cache must include the normalized storefront host in its key, including when the upstream URL is identical for multiple tenants. Client branding and assets continue through same-origin URLs, so each host uses its own backend setup.
 
+Platform builds use German host copy, `lang="de"`, German package catalogues and neutral Open Graph artwork. The homepage reads tenant branding, public locations and the public catalogue only at runtime. It offers table reservations only for explicitly reservation-enabled locations. Shop navigation and the shop teaser appear only when the public catalogue contains a physical article; voucher-only tenants keep the gastro homepage. Runtime platform navigation uses these host-owned German labels rather than installation demo navigation. Single-installation builds retain the English starter.
+
+The homepage reserves stable action and navigation slots while location and catalogue discovery is loading, then reveals the final controls together. Legal link pages show a loading state until both legal and branding responses settle, preferring legal URLs and falling back to branding URLs.
+
+The public location contract provides name, street, postal code, city, phone and a reservation flag. It does not expose opening hours; the homepage therefore shows an address only when provided and never guesses hours or business facts. Footer legal destinations prefer `GET /api/shop/legal`, with existing branding links and local legal routes as fallbacks. No legal wording is supplied by the platform shell.
+
+Run the platform browser suite and its 16 homepage screenshots with `STOREFRONT_MULTI_TENANT=true bun run test` after stopping any default-mode dev server. It covers 390 and 1440 px, light and dark browser preferences, and all combinations of physical articles and location address data. Images are written to `artifacts/screenshots/platform/`; the established default theme stays light under either preference. Default-mode `bun run test` runs the English regression suite instead.
+
 ### Legal pages and publication
 
 `/impressum` and `/datenschutz` read `GET /api/shop/legal` from the installation. They render the operator's own Impressum (company data, e-mail, register entry, VAT ID) and privacy text, or forward to the operator's own HTTPS page when one is configured. The demo placeholder appears only when no installation answers. The starter never ships legal wording. The footer links both pages on every page, using the installation's `imprint_url` and `privacy_url` when set.
@@ -76,7 +84,7 @@ The runtime reads the same-origin `GET /api/shop/payments/status` response witho
 
 ## UI language
 
-The starter-owned interface, metadata, legal placeholders and synthetic demo content are in English. EUR is retained. The package receives `locale="en"` per render for English copy and locale-aware dates, times, prices and numeric date inputs. Stable route paths and API field names remain unchanged.
+The default single-installation build keeps the starter-owned interface, metadata, legal placeholders and synthetic demo content in English. EUR is retained. In that mode, the package receives `locale="en-GB"` per render for English copy and locale-aware dates, times, prices and numeric date inputs. Stable route paths and API field names remain unchanged.
 
 `src/lib/ui-english.ts` retains only starter-specific experience terminology and editorial choices. The package supplies its typed English catalogues. Wrap a route in `ShopventoProvider` to change language; partial `messages` register another catalogue and `labels` override single keys. Starter editorial copy lives in `src/app`, `src/lib/routes.ts` and the host components. Runtime branding, product content, country names and backend errors come from your installation and must be authored in the desired language there.
 

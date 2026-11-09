@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Next.js 16 App Router, TypeScript, Tailwind v4, Bun, and published `@shopvento/ui` 0.3.0. Cloudflare Workers Static Assets is the deployment target.
+Next.js 16 App Router, TypeScript, Tailwind v4, Bun, and published `@shopvento/ui` 0.4.0. Cloudflare Workers Static Assets is the deployment target.
 
 ## Users
 
@@ -20,11 +20,11 @@ A thin, public MIT reference consumer of the commerce package. The starter owns 
 
 ## Capabilities and Constraints
 
-One instance per deployment. Runtime instance branding overrides default CSS variables. No multi-tenant registry in this starter. German guest interface; English developer documentation. Legal pages are explicit placeholders.
+Single-installation deployments use the English starter. The shared platform Worker uses a German gastro homepage and resolves tenants through the backend at runtime. Runtime branding overrides default CSS variables. Physical shop discovery appears only for tenants with public physical articles. Legal content belongs to the operator; the host supplies no legal wording. Developer documentation is English.
 
 ## Brand Commitments
 
-Shopvento's coral and aubergine palette, Bricolage Grotesque display face, Source Sans 3 body face, and restrained rounded controls are binding. The fictional business name and copy are delegated by the brief; this implementation uses Nebenan Atelier, workshops, tastings and guided tours.
+Shopvento's coral and aubergine palette, Bricolage Grotesque display face, Source Sans 3 body face, and restrained rounded controls are binding. The single-installation demo uses the fictional Nebenan Atelier. Platform builds use neutral German copy and runtime tenant branding, with no invented restaurant facts.
 
 ## Evidence on Hand
 

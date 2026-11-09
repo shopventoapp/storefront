@@ -11,33 +11,39 @@ import {
   ReservationForm,
 } from "@shopvento/ui/forms";
 import { ShopFlow } from "@shopvento/ui/shop-flow";
+import { platformMode, uiLocale } from "@/lib/platform";
 import { englishShopCopy } from "@/lib/ui-english";
 import {
   PaymentAvailability,
   publicApi,
   publicHref,
   useBranding,
+  useLegalLinks,
   usePublicSettings,
 } from "./runtime";
 
 const sections: ShopSectionDefinition[] = [
   {
     key: "produkte",
-    label: "Products",
-    description: "Little discoveries for your home.",
+    label: platformMode ? "Produkte" : "Products",
+    description: platformMode
+      ? "Entdecke unsere Produkte."
+      : "Little discoveries for your home.",
     image: "produkte",
   },
   {
     key: "gutscheine",
-    label: "Vouchers",
-    description: "Give the gift of time together.",
+    label: platformMode ? "Gutscheine" : "Vouchers",
+    description: platformMode
+      ? "Verschenke gemeinsame Zeit."
+      : "Give the gift of time together.",
     image: "gutscheine",
   },
 ];
 
 function productPresentation(article: ShopArticle) {
   return {
-    ...defaultShopProduct(article, {}, { locale: "en-GB" }),
+    ...defaultShopProduct(article, {}, { locale: uiLocale }),
     category: categoryFor(article),
   };
 }
@@ -57,9 +63,9 @@ export function Commerce({ path }: { path: string }) {
         categoryKey={categoryFor}
         productModel={productPresentation}
         NewsletterComponent={Newsletter}
-        {...englishShopCopy}
+        {...(platformMode ? {} : englishShopCopy)}
         routes={{ events: "/events" }}
-        locale="en-GB"
+        locale={uiLocale}
       />
     </div>
   );
@@ -67,30 +73,38 @@ export function Commerce({ path }: { path: string }) {
 
 export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
   const brand = useBranding();
+  const legal = useLegalLinks();
   const { data } = usePublicSettings();
   return (
     <NewsletterSignup
       {...props}
-      locale="en-GB"
+      locale={uiLocale}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
-      privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
+      privacyUrl={publicHref(
+        legal.privacy_url || brand.privacy_url,
+        "/datenschutz",
+      )}
     />
   );
 }
 
 export function Reservation() {
   const brand = useBranding();
+  const legal = useLegalLinks();
   const { data } = usePublicSettings();
   return (
     <ReservationForm
       NewsletterComponent={Newsletter}
-      locale="en-GB"
+      locale={uiLocale}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       termsEnabled
-      termsUrl={publicHref(brand.terms_url, "/agb")}
-      privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
+      termsUrl={publicHref(legal.terms_url || brand.terms_url, "/agb")}
+      privacyUrl={publicHref(
+        legal.privacy_url || brand.privacy_url,
+        "/datenschutz",
+      )}
     />
   );
 }

@@ -1,12 +1,13 @@
 import { LegalContent } from "@/components/legal";
 import { pageMetadata } from "@/lib/metadata";
+import { platformMode } from "@/lib/platform";
 export const metadata = pageMetadata("/datenschutz");
 export default function Page() {
   return (
     <article className="wrap legal page-content">
       <LegalContent
         kind="privacy"
-        title="Privacy"
+        title={platformMode ? "Datenschutz" : "Privacy"}
         placeholder={
           <>
             <div className="page-intro">

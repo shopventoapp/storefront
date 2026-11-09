@@ -1,9 +1,12 @@
 import { UpcomingEvents } from "@/components/events";
+import { GastroHome } from "@/components/gastro-home";
 import { pageMetadata } from "@/lib/metadata";
+import { platformMode } from "@/lib/platform";
 
 export const metadata = pageMetadata("/");
 
 export default function Home() {
+  if (platformMode) return <GastroHome />;
   return (
     <>
       <section className="home-programme">

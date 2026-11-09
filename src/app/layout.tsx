@@ -9,6 +9,7 @@ import type { CSSProperties } from "react";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { RuntimeProvider } from "@/components/runtime";
 import { buildOrigin } from "@/lib/metadata";
+import { platformMode, uiLocale } from "@/lib/platform";
 import { demoName } from "@/lib/routes";
 import "@fontsource/bricolage-grotesque/latin-600.css";
 import "@fontsource/bricolage-grotesque/latin-700.css";
@@ -23,7 +24,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(buildOrigin),
   title: { default: demoName, template: `%s · ${demoName}` },
-  description: "Discover workshops, tastings and tours at Nebenan Atelier.",
+  description: platformMode
+    ? "Veranstaltungen und Gutscheine."
+    : "Discover workshops, tastings and tours at Nebenan Atelier.",
 };
 
 const contract =
@@ -58,7 +61,11 @@ export default async function RootLayout({
     "--sv-font-label": "var(--body)",
   });
   return (
-    <html lang="en" className="sv-redesign" style={tokens as CSSProperties}>
+    <html
+      lang={platformMode ? "de" : "en"}
+      className="sv-redesign"
+      style={tokens as CSSProperties}
+    >
       <head>
         <link rel="stylesheet" href={brandingStylesheet} />
       </head>
@@ -69,9 +76,9 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: `<!-- ${contract} -->` }}
         />
         <a className="skip-link" href="#inhalt">
-          Skip to content
+          {platformMode ? "Zum Inhalt" : "Skip to content"}
         </a>
-        <ShopventoProvider locale="en-GB">
+        <ShopventoProvider locale={uiLocale}>
           <RuntimeProvider initialBranding={branding}>
             <SiteHeader />
             <main id="inhalt">{children}</main>

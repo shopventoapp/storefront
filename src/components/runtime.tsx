@@ -1,12 +1,18 @@
 "use client";
 
-import { createBookingClient, useAccountResource } from "@shopvento/ui";
+import {
+  createBookingClient,
+  createShopClient,
+  type Location,
+  useAccountResource,
+} from "@shopvento/ui";
 import { type Branding, loadBranding } from "@shopvento/ui/branding";
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   loadPaymentStatus,
   type PublicPaymentStatus,
 } from "@/lib/payment-status";
+import { platformMode } from "@/lib/platform";
 import { demoName, privatePages, publicPages, shellPath } from "@/lib/routes";
 
 export const bookingClient = createBookingClient({
@@ -15,6 +21,20 @@ export const bookingClient = createBookingClient({
 });
 
 export type { Branding } from "@shopvento/ui/branding";
+
+const shopClient = createShopClient();
+const DiscoveryContext = createContext<{
+  hasShop: boolean;
+  locations: Location[];
+  ready: boolean;
+}>({ hasShop: false, locations: [], ready: false });
+export const useDiscovery = () => useContext(DiscoveryContext);
+const LegalLinksContext = createContext<{
+  links: Record<string, string>;
+  ready: boolean;
+}>({ links: {}, ready: false });
+export const useLegalResource = () => useContext(LegalLinksContext);
+export const useLegalLinks = () => useLegalResource().links;
 
 const BrandContext = createContext<Branding>({});
 export const useBranding = () => useContext(BrandContext);
@@ -26,8 +46,14 @@ export function PaymentAvailability() {
   if (status?.online_payments_enabled !== false) return null;
   return (
     <p className="state" role="status">
-      Card payments: <span lang="de">Bald verfügbar</span>. Voucher-only
-      redemption and free reservations remain available.
+      {platformMode ? (
+        "Kartenzahlung ist bald verfügbar. Du kannst weiterhin Gutscheine einlösen."
+      ) : (
+        <>
+          Card payments: <span lang="de">Bald verfügbar</span>. Voucher-only
+          redemption and free reservations remain available.
+        </>
+      )}
     </p>
   );
 }
@@ -52,6 +78,37 @@ export function RuntimeProvider({
   initialBranding?: Branding;
 }) {
   const [branding, setBranding] = useState<Branding>(initialBranding);
+  const [brandingReady, setBrandingReady] = useState(!platformMode);
+  const { data: catalogue, loading: catalogueLoading } = useAccountResource(
+    async (signal) =>
+      platformMode
+        ? shopClient.request("catalogue", undefined, { signal })
+        : null,
+  );
+  const { data: locationData, loading: locationsLoading } = useAccountResource(
+    async (signal) =>
+      platformMode ? bookingClient.listLocations(signal) : null,
+  );
+  const { data: legal, loading: legalLoading } = useAccountResource(
+    async (signal) => {
+      if (!platformMode) return {};
+      const response = await fetch("/api/shop/legal", {
+        signal,
+        cache: "no-store",
+        credentials: "same-origin",
+        redirect: "manual",
+      });
+      if (!response.ok) return {};
+      const value: unknown = await response.json();
+      if (!value || typeof value !== "object" || Array.isArray(value))
+        return {};
+      return Object.fromEntries(
+        Object.entries(value).filter(
+          ([key, item]) => key.endsWith("_url") && typeof item === "string",
+        ),
+      ) as Record<string, string>;
+    },
+  );
   const { data: payments } = useAccountResource(loadPaymentStatus);
   useEffect(() => {
     const controller = new AbortController();
@@ -59,6 +116,9 @@ export function RuntimeProvider({
       .then(setBranding)
       .catch(() => {
         /* Default branding stays usable when the instance is unavailable. */
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBrandingReady(true);
       });
     return () => controller.abort();
   }, []);
@@ -73,7 +133,9 @@ export function RuntimeProvider({
     const description =
       "description" in page
         ? page.description.replaceAll(demoName, name)
-        : `Bookings, vouchers and orders · ${name}`;
+        : platformMode
+          ? `Veranstaltungen und Gutscheine · ${name}`
+          : `Bookings, vouchers and orders · ${name}`;
     function syncMetadata() {
       const set = (selector: string, attribute: string, value: string) => {
         for (const element of document.querySelectorAll(selector))
@@ -111,7 +173,22 @@ export function RuntimeProvider({
   }, [branding]);
   return (
     <BrandContext value={branding}>
-      <PaymentContext value={payments ?? null}>{children}</PaymentContext>
+      <DiscoveryContext
+        value={{
+          hasShop:
+            catalogue?.articles.some(
+              (article) => article.type === "PHYSICAL",
+            ) ?? false,
+          locations: locationData?.locations ?? [],
+          ready: !locationsLoading && !catalogueLoading,
+        }}
+      >
+        <LegalLinksContext
+          value={{ links: legal ?? {}, ready: !legalLoading && brandingReady }}
+        >
+          <PaymentContext value={payments ?? null}>{children}</PaymentContext>
+        </LegalLinksContext>
+      </DiscoveryContext>
     </BrandContext>
   );
 }

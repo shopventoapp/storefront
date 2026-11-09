@@ -149,6 +149,12 @@ export const branding = {
 };
 
 export async function mockShop(page: Page) {
+  await page.route("https://challenges.cloudflare.com/**", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: "window.turnstile = { render: () => { window.__shopventoTurnstileRenders = (window.__shopventoTurnstileRenders || 0) + 1; return 'synthetic-widget'; }, remove: () => {}, reset: () => {} };",
+    }),
+  );
   await page.route("**/branding/theme.css", (route) =>
     route.fulfill({
       contentType: "text/css",

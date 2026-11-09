@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  // Keep multi-page flows stable against the single local Next.js dev server.
+  workers: 2,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -14,7 +16,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "bun run dev",
-    url: "http://localhost:3100",
+    url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

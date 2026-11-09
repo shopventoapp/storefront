@@ -20,7 +20,10 @@ function availablePort(start: number): number {
 }
 
 const nextPort = availablePort(3200);
-const port = availablePort(3100);
+const requestedOrigin = new URL(
+  process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100",
+);
+const port = availablePort(Number(requestedOrigin.port || 3100));
 const child = Bun.spawn(
   [
     "bun",

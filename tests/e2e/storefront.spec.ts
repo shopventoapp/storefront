@@ -6,6 +6,11 @@ import {
   mockShop,
 } from "../fixtures/shop";
 
+test.skip(
+  process.env.STOREFRONT_MULTI_TENANT === "true",
+  "English single-installation suite",
+);
+
 const demoGreeting =
   /^(?:Hello|Good morning|Good afternoon|Good evening), Demo\.$/;
 
@@ -119,7 +124,7 @@ test("instance branding overrides the starter at runtime", async ({ page }) => {
   await expect(page).toHaveTitle(/Room for ideas/);
   await expect(
     page.locator('head link[rel="canonical"]').first(),
-  ).toHaveAttribute("href", "http://localhost:3100/");
+  ).toHaveAttribute("href", `${new URL(page.url()).origin}/`);
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -513,4 +518,19 @@ test("the starter placeholder remains only without a connected installation", as
   await expect(
     page.getByText("Demo placeholder", { exact: true }),
   ).toBeVisible();
+});
+
+test("newsletter renders Turnstile through the local widget stub", async ({
+  page,
+}) => {
+  await page.goto("/newsletter");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as Window & { __shopventoTurnstileRenders?: number })
+            .__shopventoTurnstileRenders ?? 0,
+      ),
+    )
+    .toBeGreaterThan(0);
 });
