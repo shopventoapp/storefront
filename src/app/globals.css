@@ -473,3 +473,24 @@ p + p {
     scroll-behavior: auto;
   }
 }
+.legal-text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.legal-address {
+  font-style: normal;
+  margin-block: 18px;
+}
+.legal-facts div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin-block: 6px;
+}
+.legal-facts dt {
+  font-weight: 600;
+}
+.legal-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

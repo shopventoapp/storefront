@@ -406,3 +406,111 @@ for (const width of [1280, 390])
     );
     await expect(page.locator("body")).not.toContainText(germanCopy);
   });
+
+const ownLegal = {
+  published: true,
+  imprint_url: "",
+  imprint: {
+    company_name: "Restaurant GmbH",
+    street: "Teststraße 12",
+    postal_code: "30159",
+    city: "Hannover",
+    country: "DE",
+    vat_id: "DE123456789",
+    phone: "+49 511 123456",
+    email: "kontakt@restaurant.example",
+    register_entry: "Amtsgericht Hannover HRB 1",
+  },
+  privacy_url: "",
+  privacy_text: "Eigener Text des Betreibers.\n\nZweiter Absatz.",
+};
+
+async function mockLegal(
+  page: import("@playwright/test").Page,
+  legal: unknown,
+) {
+  await page.route("**/api/shop/branding", (route) =>
+    route.fulfill({
+      json: { ...branding, imprint_url: "", privacy_url: "", published: true },
+    }),
+  );
+  await page.route("**/api/shop/legal", (route) =>
+    route.fulfill({ json: legal }),
+  );
+}
+
+for (const width of [390, 1280])
+  for (const colorScheme of ["light", "dark"] as const)
+    test(`legal pages show the operator's own data and the footer links them at ${width}px ${colorScheme}`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme });
+      await mockLegal(page, ownLegal);
+      const evidence = (name: string) =>
+        process.env.STOREFRONT_LEGAL_EVIDENCE_DIR
+          ? `${process.env.STOREFRONT_LEGAL_EVIDENCE_DIR}/storefront-${name}-${width}-${colorScheme}.png`
+          : testInfo.outputPath(`${name}-${width}-${colorScheme}.png`);
+      await page.goto("/impressum");
+      await expect(
+        page.getByRole("heading", { name: "Legal notice", level: 1 }),
+      ).toBeVisible();
+      await expect(page.getByText("Restaurant GmbH")).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "kontakt@restaurant.example" }),
+      ).toHaveAttribute("href", "mailto:kontakt@restaurant.example");
+      await expect(page.getByText("Amtsgericht Hannover HRB 1")).toBeVisible();
+      await expect(page.getByText("Demo placeholder")).toHaveCount(0);
+      const legalNav = page.getByRole("navigation", { name: "Legal" });
+      await expect(
+        legalNav.getByRole("link", { name: "Legal notice" }),
+      ).toHaveAttribute("href", "/impressum");
+      await expect(
+        legalNav.getByRole("link", { name: "Privacy" }),
+      ).toHaveAttribute("href", "/datenschutz");
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await page.screenshot({ path: evidence("impressum"), fullPage: true });
+      await legalNav.getByRole("link", { name: "Privacy" }).click();
+      await expect(
+        page.getByRole("heading", { name: "Privacy", level: 1 }),
+      ).toBeVisible();
+      await expect(page.getByText("Zweiter Absatz.")).toBeVisible();
+      await page.screenshot({ path: evidence("datenschutz"), fullPage: true });
+      // Every page carries both links.
+      await page.goto("/events");
+      await expect(
+        legalNav.getByRole("link", { name: "Legal notice" }),
+      ).toBeVisible();
+      await expect(
+        legalNav.getByRole("link", { name: "Privacy" }),
+      ).toBeVisible();
+      await legalNav.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: evidence("footer") });
+    });
+
+test("an operator's own legal page link replaces the starter page", async ({
+  page,
+}) => {
+  await mockLegal(page, {
+    ...ownLegal,
+    imprint_url: "https://restaurant.example/impressum",
+  });
+  await page.route("https://restaurant.example/**", (route) =>
+    route.fulfill({ contentType: "text/html", body: "<h1>Own imprint</h1>" }),
+  );
+  await page.goto("/impressum");
+  await expect(page).toHaveURL("https://restaurant.example/impressum");
+});
+
+test("the starter placeholder remains only without a connected installation", async ({
+  page,
+}) => {
+  await page.goto("/datenschutz");
+  await expect(
+    page.getByText("Demo placeholder", { exact: true }),
+  ).toBeVisible();
+});

@@ -2,7 +2,7 @@
 
 A small Next.js 16 starter for an independent Shopvento installation. It consumes the published **`@shopvento/ui` 0.4.0** for event booking, vouchers, catalogue, cart, checkout, order returns and customer accounts. The host supplies routes, theme, editorial content and a same-origin API transport.
 
-The English-language demo, **Nebenan Atelier**, is fictional. It illustrates workshops, tastings and guided experiences. Legal pages are visibly marked placeholders. Replace the demo copy and legal pages before launch.
+The English-language demo, **Nebenan Atelier**, is fictional. It illustrates workshops, tastings and guided experiences. Without a connected installation, the legal pages are visibly marked placeholders. Replace the demo copy before launch.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/shopventoapp/storefront)
 
@@ -61,6 +61,12 @@ bunx wrangler dev --env platform --local --port 8787 --var SHOPVENTO_API_URL:htt
 The Worker derives the tenant hostname from the request URL, then sends `X-Shopvento-Host`, `X-Forwarded-Host` and `X-Shopvento-Edge` on every allowed upstream request, including runtime branding, theme CSS, fonts, media and public reservations. Visitor-supplied tenant headers never select the tenant. The backend validates the secret and resolves only registered active storefront domains. It must allow trusted edge traffic for the existing `/api/shop/*`, `/branding/theme.css`, `/branding/fonts/*` and public reservation routes.
 
 Missing platform configuration returns 503 before contacting the backend. A configured edge secret also requires the exact `STOREFRONT_MULTI_TENANT=true` flag; losing the flag fails closed. A 404 from the backend public branding setup, including unknown or suspended tenant domains, returns a standalone 404 page without the demo brand or client scripts. Upstream requests use manual redirects and bypass caching; HTML and proxied tenant responses stay `no-store`. There is no shared branding cache or Cache API usage. Any future tenant cache must include the normalized storefront host in its key, including when the upstream URL is identical for multiple tenants. Client branding and assets continue through same-origin URLs, so each host uses its own backend setup.
+
+### Legal pages and publication
+
+`/impressum` and `/datenschutz` read `GET /api/shop/legal` from the installation. They render the operator's own Impressum (company data, e-mail, register entry, VAT ID) and privacy text, or forward to the operator's own HTTPS page when one is configured. The demo placeholder appears only when no installation answers. The starter never ships legal wording. The footer links both pages on every page, using the installation's `imprint_url` and `privacy_url` when set.
+
+When `/api/shop/branding` reports `published: false`, the Worker answers every page with a neutral, script-free holding page marked `noindex`. API traffic still reaches the backend, which stays authoritative. A missing `published` field, from older backends, keeps the shop visible.
 
 ### Payment availability
 
