@@ -187,7 +187,7 @@ p + p {
 .icon-link:hover {
   background: var(--sv-accent-soft);
 }
-.button {
+.sv-redesign .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,9 +205,9 @@ p + p {
 .button:hover {
   background: var(--sv-primary-hover);
 }
-.button-coral {
+.sv-redesign .button-coral {
   background: var(--coral);
-  color: var(--ink);
+  color: var(--brand-on-accent, var(--ink));
 }
 .button-coral:hover {
   background: var(--coral-hover);
@@ -291,12 +291,16 @@ p + p {
   margin: 0 0 32px;
 }
 .gift-panel > p > em {
-  color: var(--coral);
+  color: inherit;
   font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
 }
 .gift-panel .button {
   background: var(--coral);
-  color: var(--ink);
+  color: var(--brand-on-accent, var(--ink));
 }
 .closing {
   border-top: 1px solid var(--sv-border);
