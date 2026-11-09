@@ -92,3 +92,40 @@ test("accent buttons retain the existing text fallback without backend token", a
     "rgb(33, 55, 45)",
   );
 });
+
+test("404 primary action uses its contrasting foreground", async ({ page }) => {
+  await mockShop(page);
+  await page.route("**/branding/theme.css", (route) =>
+    route.fulfill({
+      contentType: "text/css",
+      body: ":root { --brand-primary: #93452f; --brand-text: #30231d; --brand-on-primary: #ffffff; }",
+    }),
+  );
+  await page.goto("/missing-contrast-check");
+  const button = page.locator("main a.button");
+  await expect(button).toBeVisible();
+  await expect(button).toHaveCSS("color", "rgb(255, 255, 255)");
+  const colors = await button.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return [style.color, style.backgroundColor];
+  });
+  expect(contrast(colors[0], colors[1])).toBeGreaterThanOrEqual(4.5);
+});
+
+test("gift emphasis inherits the panel foreground without backend tokens", async ({
+  page,
+}) => {
+  test.skip(
+    process.env.STOREFRONT_MULTI_TENANT === "true",
+    "The German home has no emphasis",
+  );
+  await mockShop(page);
+  await page.route("**/branding/theme.css", (route) =>
+    route.fulfill({ contentType: "text/css", body: "" }),
+  );
+  await page.goto("/");
+  const color = await page
+    .locator(".gift-panel > p")
+    .evaluate((element) => getComputedStyle(element).color);
+  await expect(page.locator(".gift-panel > p > em")).toHaveCSS("color", color);
+});
