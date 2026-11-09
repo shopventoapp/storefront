@@ -8,6 +8,7 @@ import {
   useAccountSession,
 } from "@shopvento/ui";
 import { useSearchParams } from "next/navigation";
+import { platformMode, uiLocale } from "@/lib/platform";
 import { englishBookingLabels } from "@/lib/ui-english";
 import {
   bookingClient,
@@ -48,28 +49,40 @@ export function UpcomingEvents({ compact = false }: { compact?: boolean }) {
   if (loading)
     return (
       <p className="state" role="status">
-        Loading upcoming experiences …
+        {platformMode
+          ? "Veranstaltungen werden geladen …"
+          : "Loading upcoming experiences …"}
       </p>
     );
   if (error)
     return (
       <div className="state" role="status">
-        <p>Dates are currently unavailable. Please try again.</p>
+        <p>
+          {platformMode
+            ? "Termine sind gerade nicht verfügbar. Bitte versuche es erneut."
+            : "Dates are currently unavailable. Please try again."}
+        </p>
         <button type="button" className="text-button" onClick={reload}>
-          Reload dates
+          {platformMode ? "Termine neu laden" : "Reload dates"}
         </button>
       </div>
     );
   if (!data?.windows.length)
     return (
       <p className="state">
-        New dates are on the way. Subscribe to our{" "}
-        <a href="/newsletter">Newsletter</a> for updates.
+        {platformMode ? (
+          "Aktuell gibt es keine kommenden Veranstaltungen."
+        ) : (
+          <>
+            New dates are on the way. Subscribe to our{" "}
+            <a href="/newsletter">Newsletter</a> for updates.
+          </>
+        )}
       </p>
     );
   return (
     <DateList
-      locale="en-GB"
+      locale={uiLocale}
       windows={compact ? data.windows.slice(0, 3) : data.windows}
       events={data.events}
       locations={data.locations}
@@ -97,26 +110,36 @@ export function EventsPage() {
   return (
     <div className="wrap page-content">
       <div className="page-intro">
-        <h1>{eventId ? "Your next experience" : "Experiences & dates"}</h1>
+        <h1>
+          {platformMode
+            ? "Veranstaltungen"
+            : eventId
+              ? "Your next experience"
+              : "Experiences & dates"}
+        </h1>
         <p>
-          {eventId
-            ? "Choose your date and book a place. We look forward to seeing you."
-            : "Learn something new, taste together and explore the neighbourhood. Find your next date here."}
+          {platformMode
+            ? "Wähle Deinen Termin und buche Deinen Platz."
+            : eventId
+              ? "Choose your date and book a place. We look forward to seeing you."
+              : "Learn something new, taste together and explore the neighbourhood. Find your next date here."}
         </p>
       </div>
       {eventId ? (
         <div className="booking-area">
           <PaymentAvailability />
           <a className="text-link" href="/events">
-            View all experiences
+            {platformMode ? "Alle Veranstaltungen" : "View all experiences"}
           </a>
           {session.loading ? (
             <p className="state" role="status">
-              Loading your account …
+              {platformMode
+                ? "Dein Konto wird geladen …"
+                : "Loading your account …"}
             </p>
           ) : (
             <EventBooking
-              labels={englishBookingLabels}
+              labels={platformMode ? undefined : englishBookingLabels}
               key={eventId}
               client={bookingClient}
               baseUrl=""

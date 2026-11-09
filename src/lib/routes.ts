@@ -1,6 +1,8 @@
-export const demoName = "Nebenan Atelier";
+import { platformMode } from "./platform";
 
-export const publicPages = [
+export const demoName = platformMode ? "Willkommen bei uns" : "Nebenan Atelier";
+
+const englishPublicPages = [
   {
     path: "/",
     title: "Time for new discoveries",
@@ -55,7 +57,7 @@ export const publicPages = [
   },
 ] as const;
 
-export const privatePages = [
+const englishPrivatePages = [
   { path: "/warenkorb", title: "Your cart" },
   { path: "/kasse", title: "Checkout" },
   { path: "/kasse/erfolg", title: "Your order" },
@@ -72,3 +74,54 @@ export function shellPath(path: string): string {
   if (path.startsWith("/konto/")) return "/konto";
   return path;
 }
+
+type PagePath =
+  | (typeof englishPublicPages)[number]["path"]
+  | (typeof englishPrivatePages)[number]["path"];
+const germanCopy: Record<PagePath, [string, string]> = {
+  "/": [
+    "Willkommen bei uns",
+    "Reserviere Deinen Tisch, entdecke Veranstaltungen und verschenke Gutscheine.",
+  ],
+  "/events": [
+    "Veranstaltungen",
+    "Entdecke kommende Veranstaltungen und buche Deinen Platz.",
+  ],
+  "/shop/gutscheine": [
+    "Gutscheine verschenken",
+    "Verschenke einen Gutschein für gemeinsame Zeit.",
+  ],
+  "/shop": ["Shop", "Entdecke Produkte und Gutscheine."],
+  "/reservierung": [
+    "Tisch reservieren",
+    "Finde einen freien Tisch für Deinen Besuch.",
+  ],
+  "/newsletter": ["Neuigkeiten", "Erhalte Neuigkeiten und Termine per E-Mail."],
+  "/impressum": ["Impressum", "Angaben zum Anbieter."],
+  "/datenschutz": ["Datenschutz", "Informationen zum Datenschutz."],
+  "/agb": ["AGB", "Allgemeine Geschäftsbedingungen des Anbieters."],
+  "/widerruf": ["Widerruf", "Informationen zum Widerruf."],
+  "/warenkorb": ["Dein Warenkorb", ""],
+  "/kasse": ["Kasse", ""],
+  "/kasse/erfolg": ["Deine Bestellung", ""],
+  "/kasse/abgebrochen": ["Zahlung unterbrochen", ""],
+  "/bestellung": ["Deine Bestellung", ""],
+  "/versand": ["Versand und Abholung", ""],
+  "/buchung": ["Deine Buchung", ""],
+  "/konto": ["Dein Konto", ""],
+};
+
+export function pagesFor(platform: boolean) {
+  return {
+    publicPages: englishPublicPages.map((page) => ({
+      ...page,
+      title: platform ? germanCopy[page.path][0] : page.title,
+      description: platform ? germanCopy[page.path][1] : page.description,
+    })),
+    privatePages: englishPrivatePages.map((page) => ({
+      ...page,
+      title: platform ? germanCopy[page.path][0] : page.title,
+    })),
+  };
+}
+export const { publicPages, privatePages } = pagesFor(platformMode);

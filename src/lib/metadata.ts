@@ -1,14 +1,24 @@
 import type { Metadata } from "next";
-import { demoName, publicPages } from "./routes";
+import { platformMode } from "./platform";
+import { demoName, privatePages, publicPages } from "./routes";
 
 // The Worker replaces this reserved origin with the request origin at runtime.
 export const buildOrigin = "https://storefront.example";
 
 export function pageMetadata(path: string, title?: string): Metadata {
-  const page = publicPages.find((page) => page.path === path);
-  const name = title ?? page?.title ?? "Your experience";
+  const page = [...publicPages, ...privatePages].find(
+    (page) =>
+      page.path ===
+      (platformMode && path === "/gutscheine" ? "/shop/gutscheine" : path),
+  );
+  const name = platformMode
+    ? (page?.title ?? "Dein Besuch")
+    : (title ?? page?.title ?? "Your experience");
   const description =
-    page?.description ?? "Bookings, vouchers and orders at Nebenan Atelier.";
+    (page && "description" in page ? page.description : undefined) ??
+    (platformMode
+      ? "Reservierungen, Veranstaltungen und Gutscheine."
+      : "Bookings, vouchers and orders at Nebenan Atelier.");
   return {
     title: name,
     description,
@@ -18,10 +28,13 @@ export function pageMetadata(path: string, title?: string): Metadata {
       description,
       url: path,
       type: "website",
-      locale: "en_GB",
+      locale: platformMode ? "de_DE" : "en_GB",
       siteName: demoName,
       images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
     },
-    robots: { index: Boolean(page), follow: Boolean(page) },
+    robots: {
+      index: publicPages.some((item) => item.path === path),
+      follow: publicPages.some((item) => item.path === path),
+    },
   };
 }

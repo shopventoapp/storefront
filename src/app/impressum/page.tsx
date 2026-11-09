@@ -1,12 +1,13 @@
 import { LegalContent } from "@/components/legal";
 import { pageMetadata } from "@/lib/metadata";
+import { platformMode } from "@/lib/platform";
 export const metadata = pageMetadata("/impressum");
 export default function Page() {
   return (
     <article className="wrap legal page-content">
       <LegalContent
         kind="imprint"
-        title="Legal notice"
+        title={platformMode ? "Impressum" : "Legal notice"}
         placeholder={
           <>
             <div className="page-intro">

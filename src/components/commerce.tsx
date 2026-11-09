@@ -11,6 +11,7 @@ import {
   ReservationForm,
 } from "@shopvento/ui/forms";
 import { ShopFlow } from "@shopvento/ui/shop-flow";
+import { platformMode, uiLocale } from "@/lib/platform";
 import { englishShopCopy } from "@/lib/ui-english";
 import {
   PaymentAvailability,
@@ -23,21 +24,25 @@ import {
 const sections: ShopSectionDefinition[] = [
   {
     key: "produkte",
-    label: "Products",
-    description: "Little discoveries for your home.",
+    label: platformMode ? "Produkte" : "Products",
+    description: platformMode
+      ? "Entdecke unsere Produkte."
+      : "Little discoveries for your home.",
     image: "produkte",
   },
   {
     key: "gutscheine",
-    label: "Vouchers",
-    description: "Give the gift of time together.",
+    label: platformMode ? "Gutscheine" : "Vouchers",
+    description: platformMode
+      ? "Verschenke gemeinsame Zeit."
+      : "Give the gift of time together.",
     image: "gutscheine",
   },
 ];
 
 function productPresentation(article: ShopArticle) {
   return {
-    ...defaultShopProduct(article, {}, { locale: "en-GB" }),
+    ...defaultShopProduct(article, {}, { locale: uiLocale }),
     category: categoryFor(article),
   };
 }
@@ -57,9 +62,9 @@ export function Commerce({ path }: { path: string }) {
         categoryKey={categoryFor}
         productModel={productPresentation}
         NewsletterComponent={Newsletter}
-        {...englishShopCopy}
+        {...(platformMode ? {} : englishShopCopy)}
         routes={{ events: "/events" }}
-        locale="en-GB"
+        locale={uiLocale}
       />
     </div>
   );
@@ -71,7 +76,7 @@ export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
   return (
     <NewsletterSignup
       {...props}
-      locale="en-GB"
+      locale={uiLocale}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
@@ -85,7 +90,7 @@ export function Reservation() {
   return (
     <ReservationForm
       NewsletterComponent={Newsletter}
-      locale="en-GB"
+      locale={uiLocale}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       termsEnabled

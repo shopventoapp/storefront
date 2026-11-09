@@ -1,14 +1,19 @@
+import { platformMode } from "@/lib/platform";
 export default function NotFound() {
   return (
     <div className="wrap page-content">
       <div className="page-intro">
-        <h1>This page is out of reach.</h1>
+        <h1>
+          {platformMode ? "Seite nicht gefunden" : "This page is out of reach."}
+        </h1>
         <p>
-          This page does not exist. Explore our upcoming experiences instead.
+          {platformMode
+            ? "Diese Seite gibt es nicht. Entdecke unsere kommenden Veranstaltungen."
+            : "This page does not exist. Explore our upcoming experiences instead."}
         </p>
       </div>
       <a className="button" href="/events">
-        Explore experiences
+        {platformMode ? "Veranstaltungen entdecken" : "Explore experiences"}
       </a>
     </div>
   );

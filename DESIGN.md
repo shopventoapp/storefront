@@ -134,3 +134,7 @@ All keyboard actions keep a visible focus treatment. The host uses a 3px semanti
 - **Don't** introduce a second visual system inside commerce flows.
 - **Don't** replace useful programme rows with decorative content or unsupported imagery.
 - **Don't** remove keyboard focus, validation text or readable action contrast.
+
+## Platform gastro composition
+
+The shared platform build keeps this visual system and replaces the fictional editorial story with neutral German guest copy. Runtime branding names the venue; table reservations lead when explicitly enabled, followed by events and vouchers. A public address appears only when supplied, and physical shop navigation and its closing section appear together only when the catalogue contains physical articles. Missing sections leave no empty containers. Long tenant names wrap within the welcome column. The established light theme remains deliberate under both browser colour preferences.

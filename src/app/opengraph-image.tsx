@@ -2,7 +2,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "Good times. New discoveries.";
+import { platformMode } from "@/lib/platform";
+
+export const alt = platformMode
+  ? "Zeit gemeinsam genießen."
+  : "Good times. New discoveries.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const dynamic = "force-static";
@@ -29,7 +33,9 @@ export default async function Image() {
       }}
     >
       <div style={{ fontSize: 32, display: "flex" }}>
-        Discover something new together.
+        {platformMode
+          ? "Plane Deinen Besuch."
+          : "Discover something new together."}
       </div>
       <div
         style={{
@@ -40,8 +46,8 @@ export default async function Image() {
           flexDirection: "column",
         }}
       >
-        <span>Good times.</span>
-        <span>New discoveries.</span>
+        <span>{platformMode ? "Zeit gemeinsam" : "Good times."}</span>
+        <span>{platformMode ? "genießen." : "New discoveries."}</span>
       </div>
       <div
         style={{
@@ -49,11 +55,13 @@ export default async function Image() {
           background: "#ff685e",
           padding: "18px 24px",
           fontSize: 26,
-          width: "560px",
+          width: platformMode ? "950px" : "560px",
           borderRadius: "14px",
         }}
       >
-        Workshops · Tastings · Tours
+        {platformMode
+          ? "Reservierungen · Veranstaltungen · Gutscheine"
+          : "Workshops · Tastings · Tours"}
       </div>
     </div>,
     {

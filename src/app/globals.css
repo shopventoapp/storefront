@@ -494,3 +494,13 @@ p + p {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+.gastro-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.welcome h1 {
+  overflow-wrap: anywhere;
+}

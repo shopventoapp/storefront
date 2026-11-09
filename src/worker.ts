@@ -1,6 +1,6 @@
 import { loadBranding } from "@shopvento/ui/branding";
 import { isShopProxyPath, proxyShopRequest } from "@shopvento/ui/proxy";
-import { demoName, privatePages, publicPages, shellPath } from "./lib/routes";
+import { demoName, pagesFor, shellPath } from "./lib/routes";
 import { tenantTransport } from "./lib/tenant-transport";
 
 interface StorefrontEnv extends CloudflareEnv {
@@ -12,7 +12,8 @@ async function runtimeBranding(
   fetcher?: typeof fetch,
   multiTenant = false,
 ): Promise<{ name: string; published: boolean } | null> {
-  if (!apiUrl) return { name: demoName, published: true };
+  const fallback = multiTenant ? "Willkommen bei uns" : demoName;
+  if (!apiUrl) return { name: fallback, published: true };
   let notFound = false;
   let published = true;
   try {
@@ -34,12 +35,12 @@ async function runtimeBranding(
       }) as typeof fetch,
       signal: AbortSignal.timeout(4000),
     });
-    return { name: branding.brand_name?.slice(0, 255) || demoName, published };
+    return { name: branding.brand_name?.slice(0, 255) || fallback, published };
   } catch {
     if (multiTenant && notFound) return null;
     // Branding outages retain the neutral shell.
   }
-  return { name: demoName, published: true };
+  return { name: fallback, published: true };
 }
 
 const standaloneHeaders = {
@@ -91,6 +92,8 @@ export default {
   async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
     const url = new URL(request.url);
     const transport = tenantTransport(request, env);
+    const platform = env.STOREFRONT_MULTI_TENANT === "true";
+    const { publicPages, privatePages } = pagesFor(platform);
     if (!transport)
       return Response.json(
         { detail: "Storefront unavailable" },
@@ -158,7 +161,7 @@ export default {
     if (branding === null) {
       await response.body?.cancel();
       return new Response(
-        '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Storefront not found</title><h1>Storefront not found</h1><p>This storefront is unavailable.</p></html>',
+        '<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Seite nicht gefunden</title><h1>Seite nicht gefunden</h1><p>Diese Seite ist nicht verfügbar.</p></html>',
         { status: 404, headers: standaloneHeaders },
       );
     }
@@ -178,6 +181,16 @@ export default {
     const canonical = new URL(url.pathname, url.origin);
     const title = page ? `${page.title} | ${name}` : name;
     const rewriter = new HTMLRewriter()
+      .on("html", {
+        element(element) {
+          element.setAttribute("lang", platform ? "de" : "en");
+        },
+      })
+      .on('meta[property="og:locale"]', {
+        element(element) {
+          element.setAttribute("content", platform ? "de_DE" : "en_GB");
+        },
+      })
       .on("title", {
         element(element) {
           element.setInnerContent(title);
@@ -219,7 +232,14 @@ export default {
         {
           element(element) {
             const value = element.getAttribute("content");
-            if (value)
+            if (platform)
+              element.setAttribute(
+                "content",
+                page && "description" in page
+                  ? page.description
+                  : "Reservierungen, Veranstaltungen und Gutscheine.",
+              );
+            else if (value)
               element.setAttribute("content", value.replaceAll(demoName, name));
           },
         },

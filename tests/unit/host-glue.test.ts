@@ -61,3 +61,17 @@ describe("English page metadata", () => {
     );
   });
 });
+
+describe("platform page metadata", () => {
+  test("provides German public and private route copy without a demo identity", async () => {
+    const { pagesFor } = await import("../../src/lib/routes");
+    const pages = pagesFor(true);
+    expect(
+      pages.publicPages.find((page) => page.path === "/events")?.title,
+    ).toBe("Veranstaltungen");
+    expect(
+      pages.privatePages.find((page) => page.path === "/konto")?.title,
+    ).toBe("Dein Konto");
+    expect(JSON.stringify(pages)).not.toMatch(/Atelier|placeholder|workshop/i);
+  });
+});

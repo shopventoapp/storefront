@@ -1,7 +1,8 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { publicHref } from "./runtime";
+import { platformMode } from "@/lib/platform";
+import { publicHref, useLegalLinks } from "./runtime";
 
 /** The operator's own legal pages from `GET /api/shop/legal` (#43723). */
 export type Legal = {
@@ -71,10 +72,18 @@ export function LegalContent({
   if (legal === undefined)
     return (
       <p className="state" role="status">
-        Loading …
+        {platformMode ? "Wird geladen …" : "Loading …"}
       </p>
     );
-  if (legal === null) return <>{placeholder}</>;
+  if (legal === null)
+    return platformMode ? (
+      <>
+        <h1>{title}</h1>
+        <p>Diese Angaben sind gerade nicht verfügbar.</p>
+      </>
+    ) : (
+      placeholder
+    );
   const intro = (
     <div className="page-intro">
       <h1>{title}</h1>
@@ -86,7 +95,9 @@ export function LegalContent({
         {intro}
         <p>
           <a className="text-link" href={link}>
-            Open the {title.toLowerCase()} of this shop
+            {platformMode
+              ? `${title} öffnen`
+              : `Open the ${title.toLowerCase()} of this shop`}
           </a>
         </p>
       </>
@@ -98,7 +109,11 @@ export function LegalContent({
         {legal.privacy_text ? (
           <div className="legal-text">{legal.privacy_text}</div>
         ) : (
-          <p>No privacy policy has been provided yet.</p>
+          <p>
+            {platformMode
+              ? "Es wurden noch keine Angaben zum Datenschutz hinterlegt."
+              : "No privacy policy has been provided yet."}
+          </p>
         )}
       </>
     );
@@ -107,17 +122,24 @@ export function LegalContent({
     return (
       <>
         {intro}
-        <p>No legal notice has been provided yet.</p>
+        <p>
+          {platformMode
+            ? "Es wurde noch kein Impressum hinterlegt."
+            : "No legal notice has been provided yet."}
+        </p>
       </>
     );
   const rows: [string, ReactNode][] = [
     [
-      "Email",
+      platformMode ? "E-Mail" : "Email",
       imprint.email && <a href={`mailto:${imprint.email}`}>{imprint.email}</a>,
     ],
-    ["Phone", imprint.phone],
-    ["Register entry", imprint.register_entry],
-    ["VAT ID", imprint.vat_id],
+    [platformMode ? "Telefon" : "Phone", imprint.phone],
+    [
+      platformMode ? "Registereintrag" : "Register entry",
+      imprint.register_entry,
+    ],
+    [platformMode ? "Umsatzsteuer-ID" : "VAT ID", imprint.vat_id],
   ];
   return (
     <>
@@ -146,5 +168,29 @@ export function LegalContent({
           ))}
       </dl>
     </>
+  );
+}
+
+/** Displays a backend-owned destination without inventing legal content. */
+export function PlatformLegalPage({
+  kind,
+  title,
+}: {
+  kind: "terms" | "withdrawal";
+  title: string;
+}) {
+  const legal = useLegalLinks();
+  const href = publicHref(legal[`${kind}_url`], "");
+  return (
+    <article className="wrap legal page-content">
+      <h1>{title}</h1>
+      {href ? (
+        <a className="text-link" href={href}>
+          {title} öffnen
+        </a>
+      ) : (
+        <p>Diese Angaben sind gerade nicht verfügbar.</p>
+      )}
+    </article>
   );
 }

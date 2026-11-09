@@ -6,6 +6,11 @@ import {
   mockShop,
 } from "../fixtures/shop";
 
+test.skip(
+  process.env.STOREFRONT_MULTI_TENANT === "true",
+  "English single-installation suite",
+);
+
 const demoGreeting =
   /^(?:Hello|Good morning|Good afternoon|Good evening), Demo\.$/;
 

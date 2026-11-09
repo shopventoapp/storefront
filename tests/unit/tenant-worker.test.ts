@@ -96,7 +96,7 @@ describe("multi-tenant Worker", () => {
       expect(response.headers.get("CDN-Cache-Control")).toBe("no-store");
       expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
       const body = await response.text();
-      expect(body).toContain("Storefront not found");
+      expect(body).toContain("Seite nicht gefunden");
       expect(body).not.toContain(demoName);
       expect(body).not.toContain("<script");
     }
@@ -252,7 +252,7 @@ describe("multi-tenant Worker", () => {
           env,
         );
         const body = await response.text();
-        expect(body).toContain(`Experiences &amp; dates | ${names[host]}`);
+        expect(body).toContain(`Veranstaltungen | ${names[host]}`);
         expect(body).toContain(`content="${names[host]}"`);
         expect(body).toContain(`href="https://${host}/events"`);
         expect(response.headers.get("Cache-Control")).toBe("no-store");

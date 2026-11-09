@@ -47,7 +47,7 @@ export const settings = {
   shop_checkout_review_required: false,
   guest_max_seats: 8,
   online_lead_hours: 24,
-  turnstile_site_key: "1x00000000000000000000AA",
+  turnstile_site_key: "",
 } satisfies ShopSettings;
 
 export const product = {

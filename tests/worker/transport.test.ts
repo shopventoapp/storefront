@@ -222,7 +222,9 @@ test("workerd isolates tenant metadata, theme assets and proxy identity", async 
       const response = await fetch(`${platformOrigin}/events`, { headers });
       const html = await response.text();
       expect(response.status).toBe(200);
-      expect(html).toContain(`Experiences &amp; dates | ${name}`);
+      expect(html).toContain(`Veranstaltungen | ${name}`);
+      expect(html).toContain('lang="de"');
+      expect(html).toContain('content="de_DE"');
       expect(html.includes(`href="http://${host}/events/"`)).toBe(true);
       expect(response.headers.get("Cache-Control")).toBe("no-store");
       expect(html).not.toContain(edgeSecret);
@@ -247,7 +249,7 @@ test("workerd returns a standalone 404 for unknown or suspended storefronts", as
     expect(response.status).toBe(404);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     const html = await response.text();
-    expect(html).toContain("Storefront not found");
+    expect(html).toContain("Seite nicht gefunden");
     expect(html).not.toContain("Nebenan Atelier");
     expect(html).not.toContain("<script");
   }
@@ -282,4 +284,19 @@ test("published tenants and older backends without the flag keep the shop", asyn
   const html = await response.text();
   expect(response.status).toBe(200);
   expect(html).not.toContain("Hier entsteht");
+});
+
+test("platform homepage export is neutral and German", async () => {
+  if (process.env.STOREFRONT_MULTI_TENANT !== "true") return;
+  const response = await fetch(`${platformOrigin}/`, {
+    headers: { Host: "bistro.shopvento.app" },
+  });
+  const html = await response.text();
+  expect(response.status).toBe(200);
+  expect(html).toContain('lang="de"');
+  expect(html).toContain("Gutscheine verschenken");
+  expect(html).toContain("Kommende Veranstaltungen");
+  expect(html).not.toContain("Nebenan Atelier");
+  expect(html).not.toContain("Good times.");
+  expect(html).not.toContain("Coming up at the atelier");
 });

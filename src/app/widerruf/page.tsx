@@ -1,6 +1,10 @@
+import { PlatformLegalPage } from "@/components/legal";
 import { pageMetadata } from "@/lib/metadata";
+import { platformMode } from "@/lib/platform";
 export const metadata = pageMetadata("/widerruf");
 export default function Page() {
+  if (platformMode)
+    return <PlatformLegalPage kind="withdrawal" title="Widerruf" />;
   return (
     <article className="wrap legal page-content">
       <div className="page-intro">

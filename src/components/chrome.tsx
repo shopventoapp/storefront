@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { BrandName, publicHref, useBranding } from "./runtime";
+import { platformMode } from "@/lib/platform";
+import { demoName } from "@/lib/routes";
+import {
+  BrandName,
+  publicHref,
+  useBranding,
+  useDiscovery,
+  useLegalLinks,
+} from "./runtime";
 
 const navigation = [
   { label: "Experiences", href: "/events" },
@@ -14,14 +22,26 @@ export function SiteHeader() {
   const [pathname, setPathname] = useState("");
   useEffect(() => setPathname(window.location.pathname.replace(/\/$/, "")), []);
   const branding = useBranding();
-  const links = branding.navigation?.length ? branding.navigation : navigation;
+  const { hasShop, locations } = useDiscovery();
+  const links = platformMode
+    ? [
+        ...(locations.some((location) => location.table_reservations_enabled)
+          ? [{ label: "Tisch reservieren", href: "/reservierung" }]
+          : []),
+        { label: "Veranstaltungen", href: "/events" },
+        { label: "Gutscheine", href: "/gutscheine" },
+        ...(hasShop ? [{ label: "Shop", href: "/shop" }] : []),
+      ]
+    : branding.navigation?.length
+      ? branding.navigation
+      : navigation;
   return (
     <header className="site-header">
       <div className="wrap header-row">
         <a
           className="wordmark"
           href="/"
-          aria-label={branding.brand_name || "Nebenan Atelier – Home"}
+          aria-label={branding.brand_name || demoName}
         >
           {branding.logo_url ? (
             <Image
@@ -35,7 +55,10 @@ export function SiteHeader() {
             <BrandName />
           )}
         </a>
-        <nav aria-label="Main navigation" className="main-nav">
+        <nav
+          aria-label={platformMode ? "Hauptnavigation" : "Main navigation"}
+          className="main-nav"
+        >
           {links.map((link) => (
             <a
               key={link.href}
@@ -49,10 +72,18 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="header-actions">
-          <a href="/konto" className="icon-link" aria-label="Your account">
+          <a
+            href="/konto"
+            className="icon-link"
+            aria-label={platformMode ? "Dein Konto" : "Your account"}
+          >
             <Icon kind="person" />
           </a>
-          <a href="/warenkorb" className="icon-link" aria-label="Cart">
+          <a
+            href="/warenkorb"
+            className="icon-link"
+            aria-label={platformMode ? "Warenkorb" : "Cart"}
+          >
             <Icon kind="bag" />
           </a>
         </div>
@@ -89,6 +120,11 @@ function Icon({ kind }: { kind: "person" | "bag" }) {
 
 export function SiteFooter() {
   const branding = useBranding();
+  const legal = useLegalLinks();
+  const { locations } = useDiscovery();
+  const reserve =
+    !platformMode ||
+    locations.some((location) => location.table_reservations_enabled);
   return (
     <footer className="site-footer">
       <div className="wrap">
@@ -96,35 +132,65 @@ export function SiteFooter() {
           <a className="wordmark" href="/">
             <BrandName />
           </a>
-          <p>Good times. Fresh ideas. Together.</p>
-          <a href="/newsletter">News from the atelier</a>
+          <p>
+            {platformMode
+              ? "Zeit gemeinsam genießen."
+              : "Good times. Fresh ideas. Together."}
+          </p>
+          <a href="/newsletter">
+            {platformMode ? "Neuigkeiten" : "News from the atelier"}
+          </a>
         </div>
         <div className="footer-links">
-          <nav aria-label="More to explore">
-            <a href="/reservierung">Reservations</a>
-            <a href="/konto">Your account</a>
+          <nav aria-label={platformMode ? "Weitere Links" : "More to explore"}>
+            {reserve && (
+              <a href="/reservierung">
+                {platformMode ? "Tisch reservieren" : "Reservations"}
+              </a>
+            )}
+            <a href="/konto">{platformMode ? "Dein Konto" : "Your account"}</a>
             {branding.location_links?.map((link) => (
               <a key={link.href} href={publicHref(link.href, "/reservierung")}>
                 {link.label}
               </a>
             ))}
           </nav>
-          <nav aria-label="Legal">
-            <a href={publicHref(branding.imprint_url, "/impressum")}>
-              Legal notice
+          <nav aria-label={platformMode ? "Rechtliches" : "Legal"}>
+            <a
+              href={publicHref(
+                legal.imprint_url || branding.imprint_url,
+                "/impressum",
+              )}
+            >
+              {platformMode ? "Impressum" : "Legal notice"}
             </a>
-            <a href={publicHref(branding.privacy_url, "/datenschutz")}>
-              Privacy
+            <a
+              href={publicHref(
+                legal.privacy_url || branding.privacy_url,
+                "/datenschutz",
+              )}
+            >
+              {platformMode ? "Datenschutz" : "Privacy"}
             </a>
-            <a href={publicHref(branding.terms_url, "/agb")}>Terms</a>
-            <a href={publicHref(branding.withdrawal_url, "/widerruf")}>
-              Cancellation rights
+            <a href={publicHref(legal.terms_url || branding.terms_url, "/agb")}>
+              {platformMode ? "AGB" : "Terms"}
+            </a>
+            <a
+              href={publicHref(
+                legal.withdrawal_url || branding.withdrawal_url,
+                "/widerruf",
+              )}
+            >
+              {platformMode ? "Widerruf" : "Cancellation rights"}
             </a>
           </nav>
         </div>
-        <p className="demo-note">
-          Fictional demo atelier · Offers come from the connected installation.
-        </p>
+        {!platformMode && (
+          <p className="demo-note">
+            Fictional demo atelier · Offers come from the connected
+            installation.
+          </p>
+        )}
       </div>
     </footer>
   );
