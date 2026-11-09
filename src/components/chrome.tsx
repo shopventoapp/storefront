@@ -22,14 +22,14 @@ export function SiteHeader() {
   const [pathname, setPathname] = useState("");
   useEffect(() => setPathname(window.location.pathname.replace(/\/$/, "")), []);
   const branding = useBranding();
-  const { hasShop, locations } = useDiscovery();
+  const { hasShop, locations, ready } = useDiscovery();
   const links = platformMode
     ? [
+        { label: "Veranstaltungen", href: "/events" },
+        { label: "Gutscheine", href: "/gutscheine" },
         ...(locations.some((location) => location.table_reservations_enabled)
           ? [{ label: "Tisch reservieren", href: "/reservierung" }]
           : []),
-        { label: "Veranstaltungen", href: "/events" },
-        { label: "Gutscheine", href: "/gutscheine" },
         ...(hasShop ? [{ label: "Shop", href: "/shop" }] : []),
       ]
     : branding.navigation?.length
@@ -41,7 +41,11 @@ export function SiteHeader() {
         <a
           className="wordmark"
           href="/"
-          aria-label={branding.brand_name || demoName}
+          aria-label={
+            platformMode
+              ? `${branding.brand_name || demoName}, Startseite`
+              : branding.brand_name || demoName
+          }
         >
           {branding.logo_url ? (
             <Image
@@ -57,7 +61,9 @@ export function SiteHeader() {
         </a>
         <nav
           aria-label={platformMode ? "Hauptnavigation" : "Main navigation"}
-          className="main-nav"
+          className={platformMode ? "main-nav platform-nav" : "main-nav"}
+          data-ready={!platformMode || ready}
+          aria-busy={platformMode && !ready}
         >
           {links.map((link) => (
             <a
@@ -134,7 +140,7 @@ export function SiteFooter() {
           </a>
           <p>
             {platformMode
-              ? "Zeit gemeinsam genießen."
+              ? "Schön, dass Du da bist."
               : "Good times. Fresh ideas. Together."}
           </p>
           <a href="/newsletter">

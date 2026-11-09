@@ -19,7 +19,7 @@ cp .env.example .env.local
 bun run dev
 ```
 
-The development wrapper selects a free port from **3100** and starts its internal Next.js server on a free port from **3200**. Open the URL it prints. API calls stay on the storefront origin; the server reads the upstream setting. With an empty setting the editorial shell works and connected surfaces show their package loading/error states. The browser tests mock the API and need no installation.
+The development wrapper selects a free port from **3100** (or the port in `PLAYWRIGHT_BASE_URL` when set) and starts its internal Next.js server on a free port from **3200**. Open the URL it prints. API calls stay on the storefront origin; the server reads the upstream setting. With an empty setting the editorial shell works and connected surfaces show their package loading/error states. The browser tests mock the API and need no installation.
 
 ## Configuration
 
@@ -63,6 +63,8 @@ The Worker derives the tenant hostname from the request URL, then sends `X-Shopv
 Missing platform configuration returns 503 before contacting the backend. A configured edge secret also requires the exact `STOREFRONT_MULTI_TENANT=true` flag; losing the flag fails closed. A 404 from the backend public branding setup, including unknown or suspended tenant domains, returns a standalone 404 page without the demo brand or client scripts. Upstream requests use manual redirects and bypass caching; HTML and proxied tenant responses stay `no-store`. There is no shared branding cache or Cache API usage. Any future tenant cache must include the normalized storefront host in its key, including when the upstream URL is identical for multiple tenants. Client branding and assets continue through same-origin URLs, so each host uses its own backend setup.
 
 Platform builds use German host copy, `lang="de"`, German package catalogues and neutral Open Graph artwork. The homepage reads tenant branding, public locations and the public catalogue only at runtime. It offers table reservations only for explicitly reservation-enabled locations. Shop navigation and the shop teaser appear only when the public catalogue contains a physical article; voucher-only tenants keep the gastro homepage. Runtime platform navigation uses these host-owned German labels rather than installation demo navigation. Single-installation builds retain the English starter.
+
+The homepage reserves stable action and navigation slots while location and catalogue discovery is loading, then reveals the final controls together. Legal link pages show a loading state until both legal and branding responses settle, preferring legal URLs and falling back to branding URLs.
 
 The public location contract provides name, street, postal code, city, phone and a reservation flag. It does not expose opening hours; the homepage therefore shows an address only when provided and never guesses hours or business facts. Footer legal destinations prefer `GET /api/shop/legal`, with existing branding links and local legal routes as fallbacks. No legal wording is supplied by the platform shell.
 

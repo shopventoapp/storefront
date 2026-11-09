@@ -205,3 +205,158 @@ test("platform safely handles failed discovery and missing branding", async ({
     page.getByRole("button", { name: "Termine neu laden" }),
   ).toBeVisible();
 });
+
+for (const [path, title, key] of [
+  ["/agb", "AGB", "terms_url"],
+  ["/widerruf", "Widerruf", "withdrawal_url"],
+] as const) {
+  test(`${path} waits for legal and branding before using branding fallback`, async ({
+    page,
+  }) => {
+    await mockShop(page);
+    let finishLegal!: () => void;
+    let finishBranding!: () => void;
+    const legalGate = new Promise<void>((resolve) => {
+      finishLegal = resolve;
+    });
+    const brandingGate = new Promise<void>((resolve) => {
+      finishBranding = resolve;
+    });
+    await page.route("**/api/shop/legal", async (route) => {
+      await legalGate;
+      await route.fulfill({
+        json: { privacy_url: "https://example.com/privacy" },
+      });
+    });
+    await page.route("**/api/shop/branding", async (route) => {
+      await brandingGate;
+      await route.fulfill({
+        json: { ...branding, [key]: `https://example.com${path}` },
+      });
+    });
+    await page.goto(path);
+    await expect(page.getByRole("status")).toHaveText("Wird geladen …");
+    await expect(
+      page.getByText("Diese Angaben sind gerade nicht verfügbar."),
+    ).toHaveCount(0);
+    const legalResponse = page.waitForResponse((response) =>
+      response.url().endsWith("/api/shop/legal"),
+    );
+    finishLegal();
+    await legalResponse;
+    await expect(page.getByRole("status")).toHaveText("Wird geladen …");
+    finishBranding();
+    await expect(
+      page.getByRole("link", { name: `${title} öffnen` }),
+    ).toHaveAttribute("href", `https://example.com${path}`);
+  });
+}
+
+for (const width of [390, 1440]) {
+  for (const reservable of [false, true]) {
+    test(`discovery keeps hero and header geometry at ${width}px reservable=${reservable}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await mockShop(page);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route("**/api/shop/tastings/locations", async (route) => {
+        await gate;
+        await route.fulfill({
+          json: {
+            locations: [
+              {
+                id: 1,
+                location_name: "Beispielküche",
+                table_reservations_enabled: reservable,
+              },
+            ],
+            total: 1,
+          },
+        });
+      });
+      await page.goto("/");
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        branding.brand_name,
+      );
+      await page.evaluate(() => document.fonts.ready);
+      const actions = page.locator(".gastro-actions");
+      const nav = page.locator(".platform-nav");
+      await expect(actions).toBeHidden();
+      await expect(nav).toBeHidden();
+      const before = await page.evaluate(() =>
+        [".gastro-actions", ".site-header", ".platform-nav"].map((selector) => {
+          const r = document.querySelector(selector)?.getBoundingClientRect();
+          return r ? [r.x, r.y, r.width, r.height] : null;
+        }),
+      );
+      release();
+      await expect(actions).toBeVisible();
+      await expect(nav).toBeVisible();
+      await expect(actions.getByRole("link").first()).toHaveText(
+        reservable ? "Tisch reservieren" : "Veranstaltungen",
+      );
+      const after = await page.evaluate(() =>
+        [".gastro-actions", ".site-header", ".platform-nav"].map((selector) => {
+          const r = document.querySelector(selector)?.getBoundingClientRect();
+          return r ? [r.x, r.y, r.width, r.height] : null;
+        }),
+      );
+      expect(after).toEqual(before);
+      await expect(actions.getByRole("link").first()).toHaveText(
+        reservable ? "Tisch reservieren" : "Veranstaltungen",
+      );
+    });
+  }
+  for (const address of [false, true]) {
+    test(`disabled reservations and voucher-only articles at ${width}px address=${address}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await mockShop(page);
+      await page.route("**/api/shop/articles/catalogue", (route) =>
+        route.fulfill({
+          json: { ...catalogue, articles: catalogue.vouchers, total: 1 },
+        }),
+      );
+      await page.route("**/api/shop/tastings/locations", (route) =>
+        route.fulfill({
+          json: {
+            locations: [
+              {
+                id: 1,
+                location_name: "Beispielküche",
+                table_reservations_enabled: false,
+                ...(address ? { location_street: "Beispielstraße 1" } : {}),
+              },
+            ],
+            total: 1,
+          },
+        }),
+      );
+      await page.goto("/");
+      await expect(page.locator(".gastro-actions")).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "Tisch reservieren" }),
+      ).toHaveCount(0);
+      await expect(page.getByTestId("home-shop")).toHaveCount(0);
+      await expect(
+        page
+          .locator(".platform-nav")
+          .getByRole("link", { name: "Shop", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("heading", { name: "Hier findest Du uns" }),
+      ).toHaveCount(address ? 1 : 0);
+      await expect(
+        page.locator('meta[name="description"]').first(),
+      ).toHaveAttribute(
+        "content",
+        "Entdecke kommende Veranstaltungen und verschenke Gutscheine.",
+      );
+    });
+  }
+}

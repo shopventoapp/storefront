@@ -286,17 +286,21 @@ test("published tenants and older backends without the flag keep the shop", asyn
   expect(html).not.toContain("Hier entsteht");
 });
 
-test("platform homepage export is neutral and German", async () => {
-  if (process.env.STOREFRONT_MULTI_TENANT !== "true") return;
-  const response = await fetch(`${platformOrigin}/`, {
-    headers: { Host: "bistro.shopvento.app" },
-  });
-  const html = await response.text();
-  expect(response.status).toBe(200);
-  expect(html).toContain('lang="de"');
-  expect(html).toContain("Gutscheine verschenken");
-  expect(html).toContain("Kommende Veranstaltungen");
-  expect(html).not.toContain("Nebenan Atelier");
-  expect(html).not.toContain("Good times.");
-  expect(html).not.toContain("Coming up at the atelier");
-});
+test.skipIf(process.env.STOREFRONT_MULTI_TENANT !== "true")(
+  "platform homepage export is neutral and German",
+  async () => {
+    const response = await fetch(`${platformOrigin}/`, {
+      headers: { Host: "bistro.shopvento.app" },
+    });
+    const html = await response.text();
+    expect(response.status).toBe(200);
+    expect(html).toContain('lang="de"');
+    expect(html).toContain("Gutscheine verschenken");
+    expect(html).toContain("Kommende Veranstaltungen");
+    expect(html).not.toContain("Nebenan Atelier");
+    expect(html).not.toContain("Reserviere Deinen Tisch");
+    expect(html).not.toContain("Reservierungen, Veranstaltungen");
+    expect(html).not.toContain("Good times.");
+    expect(html).not.toContain("Coming up at the atelier");
+  },
+);

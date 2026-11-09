@@ -5,7 +5,7 @@ import { BrandName, useDiscovery } from "./runtime";
 
 /** Tenant data is read in RuntimeProvider after hydration, never during export. */
 export function GastroHome() {
-  const { hasShop, locations } = useDiscovery();
+  const { hasShop, locations, ready } = useDiscovery();
   const reservation = locations.find(
     (location) => location.table_reservations_enabled,
   );
@@ -23,7 +23,11 @@ export function GastroHome() {
               <BrandName />
             </h1>
             <p>Plane Deinen Besuch und entdecke, was als Nächstes ansteht.</p>
-            <div className="gastro-actions">
+            <div
+              className="gastro-actions"
+              data-ready={ready}
+              aria-busy={!ready}
+            >
               {reservation && (
                 <a className="button button-coral" href="/reservierung">
                   Tisch reservieren
@@ -65,7 +69,7 @@ export function GastroHome() {
       </section>
       {reservation && (
         <section className="wrap closing">
-          <h2>Plane Deinen Besuch</h2>
+          <h2>Tisch reservieren</h2>
           <p>Wähle einen Termin und die Anzahl Deiner Gäste.</p>
           <a className="button button-coral" href="/reservierung">
             Tisch reservieren

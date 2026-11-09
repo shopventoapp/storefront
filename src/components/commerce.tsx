@@ -18,6 +18,7 @@ import {
   publicApi,
   publicHref,
   useBranding,
+  useLegalLinks,
   usePublicSettings,
 } from "./runtime";
 
@@ -72,6 +73,7 @@ export function Commerce({ path }: { path: string }) {
 
 export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
   const brand = useBranding();
+  const legal = useLegalLinks();
   const { data } = usePublicSettings();
   return (
     <NewsletterSignup
@@ -79,13 +81,17 @@ export function Newsletter(props: Partial<NewsletterSignupProps> = {}) {
       locale={uiLocale}
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
-      privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
+      privacyUrl={publicHref(
+        legal.privacy_url || brand.privacy_url,
+        "/datenschutz",
+      )}
     />
   );
 }
 
 export function Reservation() {
   const brand = useBranding();
+  const legal = useLegalLinks();
   const { data } = usePublicSettings();
   return (
     <ReservationForm
@@ -94,8 +100,11 @@ export function Reservation() {
       siteKey={data?.turnstile_site_key ?? ""}
       publicApi={publicApi}
       termsEnabled
-      termsUrl={publicHref(brand.terms_url, "/agb")}
-      privacyUrl={publicHref(brand.privacy_url, "/datenschutz")}
+      termsUrl={publicHref(legal.terms_url || brand.terms_url, "/agb")}
+      privacyUrl={publicHref(
+        legal.privacy_url || brand.privacy_url,
+        "/datenschutz",
+      )}
     />
   );
 }

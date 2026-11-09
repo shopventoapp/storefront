@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import { platformMode } from "@/lib/platform";
-import { publicHref, useLegalLinks } from "./runtime";
+import { publicHref, useBranding, useLegalResource } from "./runtime";
 
 /** The operator's own legal pages from `GET /api/shop/legal` (#43723). */
 export type Legal = {
@@ -179,12 +179,17 @@ export function PlatformLegalPage({
   kind: "terms" | "withdrawal";
   title: string;
 }) {
-  const legal = useLegalLinks();
-  const href = publicHref(legal[`${kind}_url`], "");
+  const { links: legal, ready } = useLegalResource();
+  const branding = useBranding();
+  const href = publicHref(legal[`${kind}_url`] || branding[`${kind}_url`], "");
   return (
     <article className="wrap legal page-content">
       <h1>{title}</h1>
-      {href ? (
+      {!ready ? (
+        <p className="state" role="status">
+          Wird geladen …
+        </p>
+      ) : href ? (
         <a className="text-link" href={href}>
           {title} öffnen
         </a>

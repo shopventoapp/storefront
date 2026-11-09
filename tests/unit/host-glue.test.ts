@@ -75,3 +75,11 @@ describe("platform page metadata", () => {
     expect(JSON.stringify(pages)).not.toMatch(/Atelier|placeholder|workshop/i);
   });
 });
+
+test("platform metadata makes no reservation claim outside the reservation route", async () => {
+  const { pagesFor } = await import("../../src/lib/routes");
+  for (const page of pagesFor(true).publicPages) {
+    if (page.path !== "/reservierung")
+      expect(page.description).not.toMatch(/reservier|Tisch/i);
+  }
+});

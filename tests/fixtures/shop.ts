@@ -47,7 +47,7 @@ export const settings = {
   shop_checkout_review_required: false,
   guest_max_seats: 8,
   online_lead_hours: 24,
-  turnstile_site_key: "",
+  turnstile_site_key: "1x00000000000000000000AA",
 } satisfies ShopSettings;
 
 export const product = {
@@ -149,6 +149,12 @@ export const branding = {
 };
 
 export async function mockShop(page: Page) {
+  await page.route("https://challenges.cloudflare.com/**", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: "window.turnstile = { render: () => { window.__shopventoTurnstileRenders = (window.__shopventoTurnstileRenders || 0) + 1; return 'synthetic-widget'; }, remove: () => {}, reset: () => {} };",
+    }),
+  );
   await page.route("**/branding/theme.css", (route) =>
     route.fulfill({
       contentType: "text/css",

@@ -504,3 +504,37 @@ p + p {
 .welcome h1 {
   overflow-wrap: anywhere;
 }
+
+/* Keep discovery controls in reserved slots until both runtime resources settle. */
+.gastro-actions {
+  min-height: 54px;
+}
+.platform-nav {
+  flex: 1;
+  min-height: 68px;
+  align-content: center;
+}
+.gastro-actions[data-ready="false"],
+.platform-nav[data-ready="false"] {
+  visibility: hidden;
+}
+@media (max-width: 800px) {
+  .gastro-actions {
+    min-height: 108px;
+    align-content: start;
+  }
+  .platform-nav {
+    flex: 0 0 100%;
+    min-height: 68px;
+    justify-content: flex-start;
+    align-content: start;
+    gap: 8px 20px;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1100px) {
+  .gastro-actions {
+    min-height: 128px;
+    align-content: start;
+  }
+}

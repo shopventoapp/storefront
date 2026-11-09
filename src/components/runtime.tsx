@@ -26,10 +26,15 @@ const shopClient = createShopClient();
 const DiscoveryContext = createContext<{
   hasShop: boolean;
   locations: Location[];
-}>({ hasShop: false, locations: [] });
+  ready: boolean;
+}>({ hasShop: false, locations: [], ready: false });
 export const useDiscovery = () => useContext(DiscoveryContext);
-const LegalLinksContext = createContext<Record<string, string>>({});
-export const useLegalLinks = () => useContext(LegalLinksContext);
+const LegalLinksContext = createContext<{
+  links: Record<string, string>;
+  ready: boolean;
+}>({ links: {}, ready: false });
+export const useLegalResource = () => useContext(LegalLinksContext);
+export const useLegalLinks = () => useLegalResource().links;
 
 const BrandContext = createContext<Branding>({});
 export const useBranding = () => useContext(BrandContext);
@@ -42,7 +47,7 @@ export function PaymentAvailability() {
   return (
     <p className="state" role="status">
       {platformMode ? (
-        "Kartenzahlung: Bald verfügbar. Gutscheine einlösen und kostenlos reservieren ist weiterhin möglich."
+        "Kartenzahlung ist bald verfügbar. Du kannst weiterhin Gutscheine einlösen."
       ) : (
         <>
           Card payments: <span lang="de">Bald verfügbar</span>. Voucher-only
@@ -73,31 +78,37 @@ export function RuntimeProvider({
   initialBranding?: Branding;
 }) {
   const [branding, setBranding] = useState<Branding>(initialBranding);
-  const { data: catalogue } = useAccountResource(async (signal) =>
-    platformMode
-      ? shopClient.request("catalogue", undefined, { signal })
-      : null,
+  const [brandingReady, setBrandingReady] = useState(!platformMode);
+  const { data: catalogue, loading: catalogueLoading } = useAccountResource(
+    async (signal) =>
+      platformMode
+        ? shopClient.request("catalogue", undefined, { signal })
+        : null,
   );
-  const { data: locationData } = useAccountResource(async (signal) =>
-    platformMode ? bookingClient.listLocations(signal) : null,
+  const { data: locationData, loading: locationsLoading } = useAccountResource(
+    async (signal) =>
+      platformMode ? bookingClient.listLocations(signal) : null,
   );
-  const { data: legal } = useAccountResource(async (signal) => {
-    if (!platformMode) return {};
-    const response = await fetch("/api/shop/legal", {
-      signal,
-      cache: "no-store",
-      credentials: "same-origin",
-      redirect: "manual",
-    });
-    if (!response.ok) return {};
-    const value: unknown = await response.json();
-    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-    return Object.fromEntries(
-      Object.entries(value).filter(
-        ([key, item]) => key.endsWith("_url") && typeof item === "string",
-      ),
-    ) as Record<string, string>;
-  });
+  const { data: legal, loading: legalLoading } = useAccountResource(
+    async (signal) => {
+      if (!platformMode) return {};
+      const response = await fetch("/api/shop/legal", {
+        signal,
+        cache: "no-store",
+        credentials: "same-origin",
+        redirect: "manual",
+      });
+      if (!response.ok) return {};
+      const value: unknown = await response.json();
+      if (!value || typeof value !== "object" || Array.isArray(value))
+        return {};
+      return Object.fromEntries(
+        Object.entries(value).filter(
+          ([key, item]) => key.endsWith("_url") && typeof item === "string",
+        ),
+      ) as Record<string, string>;
+    },
+  );
   const { data: payments } = useAccountResource(loadPaymentStatus);
   useEffect(() => {
     const controller = new AbortController();
@@ -105,6 +116,9 @@ export function RuntimeProvider({
       .then(setBranding)
       .catch(() => {
         /* Default branding stays usable when the instance is unavailable. */
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBrandingReady(true);
       });
     return () => controller.abort();
   }, []);
@@ -120,7 +134,7 @@ export function RuntimeProvider({
       "description" in page
         ? page.description.replaceAll(demoName, name)
         : platformMode
-          ? `Reservierungen, Veranstaltungen und Gutscheine · ${name}`
+          ? `Veranstaltungen und Gutscheine · ${name}`
           : `Bookings, vouchers and orders · ${name}`;
     function syncMetadata() {
       const set = (selector: string, attribute: string, value: string) => {
@@ -166,9 +180,12 @@ export function RuntimeProvider({
               (article) => article.type === "PHYSICAL",
             ) ?? false,
           locations: locationData?.locations ?? [],
+          ready: !locationsLoading && !catalogueLoading,
         }}
       >
-        <LegalLinksContext value={legal ?? {}}>
+        <LegalLinksContext
+          value={{ links: legal ?? {}, ready: !legalLoading && brandingReady }}
+        >
           <PaymentContext value={payments ?? null}>{children}</PaymentContext>
         </LegalLinksContext>
       </DiscoveryContext>

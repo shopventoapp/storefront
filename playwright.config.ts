@@ -16,7 +16,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "bun run dev",
-    url: "http://localhost:3100",
+    url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -81,7 +81,7 @@ type PagePath =
 const germanCopy: Record<PagePath, [string, string]> = {
   "/": [
     "Willkommen bei uns",
-    "Reserviere Deinen Tisch, entdecke Veranstaltungen und verschenke Gutscheine.",
+    "Entdecke kommende Veranstaltungen und verschenke Gutscheine.",
   ],
   "/events": [
     "Veranstaltungen",

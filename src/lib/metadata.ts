@@ -17,7 +17,7 @@ export function pageMetadata(path: string, title?: string): Metadata {
   const description =
     (page && "description" in page ? page.description : undefined) ??
     (platformMode
-      ? "Reservierungen, Veranstaltungen und Gutscheine."
+      ? "Veranstaltungen und Gutscheine."
       : "Bookings, vouchers and orders at Nebenan Atelier.");
   return {
     title: name,

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(buildOrigin),
   title: { default: demoName, template: `%s · ${demoName}` },
   description: platformMode
-    ? "Reservierungen, Veranstaltungen und Gutscheine."
+    ? "Veranstaltungen und Gutscheine."
     : "Discover workshops, tastings and tours at Nebenan Atelier.",
 };
 

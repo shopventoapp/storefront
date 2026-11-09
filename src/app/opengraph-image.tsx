@@ -60,7 +60,7 @@ export default async function Image() {
         }}
       >
         {platformMode
-          ? "Reservierungen · Veranstaltungen · Gutscheine"
+          ? "Veranstaltungen · Gutscheine"
           : "Workshops · Tastings · Tours"}
       </div>
     </div>,

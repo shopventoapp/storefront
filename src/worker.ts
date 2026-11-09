@@ -237,7 +237,7 @@ export default {
                 "content",
                 page && "description" in page
                   ? page.description
-                  : "Reservierungen, Veranstaltungen und Gutscheine.",
+                  : "Veranstaltungen und Gutscheine.",
               );
             else if (value)
               element.setAttribute("content", value.replaceAll(demoName, name));
