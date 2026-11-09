@@ -7,29 +7,55 @@ interface StorefrontEnv extends CloudflareEnv {
   SHOPVENTO_API_URL?: string;
 }
 
-async function brandName(
+async function runtimeBranding(
   apiUrl?: string,
   fetcher?: typeof fetch,
   multiTenant = false,
-): Promise<string | null> {
-  if (!apiUrl) return demoName;
+): Promise<{ name: string; published: boolean } | null> {
+  if (!apiUrl) return { name: demoName, published: true };
   let notFound = false;
+  let published = true;
   try {
     const branding = await loadBranding({
       apiUrl,
       fetcher: (async (input, init) => {
         const response = await (fetcher ?? fetch)(input, init);
         notFound = response.status === 404;
+        // The package keeps presentation keys only; read the publication state from a copy.
+        if (response.ok)
+          published = await response
+            .clone()
+            .json<{ published?: unknown } | null>()
+            .then(
+              (value) => value?.published !== false,
+              () => true,
+            );
         return response;
       }) as typeof fetch,
       signal: AbortSignal.timeout(4000),
     });
-    return branding.brand_name?.slice(0, 255) || demoName;
+    return { name: branding.brand_name?.slice(0, 255) || demoName, published };
   } catch {
     if (multiTenant && notFound) return null;
     // Branding outages retain the neutral shell.
   }
-  return demoName;
+  return { name: demoName, published: true };
+}
+
+const standaloneHeaders = {
+  "Content-Type": "text/html; charset=utf-8",
+  "Cache-Control": "no-store",
+  "CDN-Cache-Control": "no-store",
+  "X-Robots-Tag": "noindex, nofollow",
+};
+
+/** Shown until the operator publishes with their own Impressum and privacy policy (#43723). */
+function holdingPage(name: string): Response {
+  const brand = xmlEscape(name);
+  return new Response(
+    `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="robots" content="noindex, nofollow"><title>${brand}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;font:18px/1.5 system-ui,sans-serif;text-align:center}h1{font-size:1.6rem;margin:0 0 .5rem}p{margin:0;opacity:.75}</style><main><h1>Hier entsteht der Shop von ${brand}.</h1><p>Schau bald wieder vorbei.</p></main></html>`,
+    { status: 200, headers: standaloneHeaders },
+  );
 }
 
 const privateRoutes = [
@@ -124,26 +150,23 @@ export default {
       status: result.status,
       headers,
     });
-    const name = await brandName(
+    const branding = await runtimeBranding(
       transport.apiUrl,
       transport.fetcher,
       env.STOREFRONT_MULTI_TENANT === "true",
     );
-    if (name === null) {
+    if (branding === null) {
       await response.body?.cancel();
       return new Response(
         '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Storefront not found</title><h1>Storefront not found</h1><p>This storefront is unavailable.</p></html>',
-        {
-          status: 404,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "no-store",
-            "CDN-Cache-Control": "no-store",
-            "X-Robots-Tag": "noindex, nofollow",
-          },
-        },
+        { status: 404, headers: standaloneHeaders },
       );
     }
+    if (!branding.published) {
+      await response.body?.cancel();
+      return holdingPage(branding.name);
+    }
+    const { name } = branding;
     const page =
       [...publicPages, ...privatePages].find(
         (item) => item.path === url.pathname.replace(/\/$/, ""),

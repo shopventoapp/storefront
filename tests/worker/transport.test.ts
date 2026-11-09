@@ -11,6 +11,7 @@ const tenantNames: Record<string, string> = {
   "atelier.shopvento.app": "Atelier A",
   "bistro.shopvento.app": "Bistro B",
 };
+const unpublishedHost = "neu.shopvento.app";
 const fontPath = `/branding/fonts/${"a".repeat(64)}.woff2`;
 const fontBytes = new Uint8Array([119, 79, 70, 50, 1, 2, 3, 4]);
 
@@ -41,11 +42,19 @@ beforeAll(async () => {
           request.headers.get("X-Forwarded-Host") !== host)
       )
         return new Response(null, { status: 403 });
-      const name = host ? tenantNames[host] : "Testatelier";
+      const name =
+        host === unpublishedHost
+          ? "Neu <Bistro>"
+          : host
+            ? tenantNames[host]
+            : "Testatelier";
       if (host && !name)
         return Response.json({ detail: "Not found" }, { status: 404 });
       if (path === "/api/shop/branding")
-        return Response.json({ brand_name: name });
+        return Response.json({
+          brand_name: name,
+          published: host !== unpublishedHost,
+        });
       if (path === "/branding/theme.css")
         return new Response(
           `@font-face{font-family:"${name}";src:url("${fontPath}") format("woff2")} :root{--brand-primary:#125c5f}`,
@@ -242,4 +251,35 @@ test("workerd returns a standalone 404 for unknown or suspended storefronts", as
     expect(html).not.toContain("Nebenan Atelier");
     expect(html).not.toContain("<script");
   }
+});
+
+test("an unpublished storefront shows only the neutral holding page (#43723)", async () => {
+  for (const path of ["/", "/events", "/impressum", "/konto"]) {
+    const response = await fetch(platformOrigin + path, {
+      headers: { Host: unpublishedHost },
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    const html = await response.text();
+    expect(html).toContain("Hier entsteht der Shop von Neu &lt;Bistro&gt;.");
+    expect(html).not.toContain("<script");
+    expect(html).not.toContain("Nebenan Atelier");
+  }
+  // The backend stays authoritative for API traffic.
+  const settings = await fetch(`${platformOrigin}/api/shop/settings`, {
+    headers: { Host: unpublishedHost },
+  });
+  expect(await settings.json()).toEqual({
+    synthetic: true,
+    host: unpublishedHost,
+    name: "Neu <Bistro>",
+  });
+});
+
+test("published tenants and older backends without the flag keep the shop", async () => {
+  const response = await fetch(`${origin}/impressum`);
+  const html = await response.text();
+  expect(response.status).toBe(200);
+  expect(html).not.toContain("Hier entsteht");
 });
