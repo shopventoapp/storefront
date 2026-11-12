@@ -80,7 +80,7 @@ When `/api/shop/branding` reports `published: false`, the Worker answers every p
 
 The runtime reads the same-origin `GET /api/shop/payments/status` response without caching and exposes `online_payments_enabled` through `usePaymentStatus()`. When it is false, catalogue/checkout and event booking surfaces show the label "Bald verfügbar" for card payments. Free table reservations and voucher browsing remain usable.
 
-`@shopvento/ui` 0.6.0 gates its final checkout and booking actions on the tenant payment status itself: paid actions show "Bald verfügbar" while payments are inactive, voucher-only redemption and free bookings stay possible based on the backend quote, and loading or failed status counts as unknown. The backend payment gate remains authoritative. Reservation forms also respect timed private-event closures.
+`@shopvento/ui` 0.6.0 gates its final checkout and booking actions on the tenant payment status itself: paid actions show "Bald verfügbar" while payments are inactive, voucher-only redemption and free bookings stay possible based on the backend quote, and loading or failed status counts as unknown. The backend payment gate remains authoritative. Reservation forms also respect timed private-event closures. Since 0.7.0 they read `opening_intervals` from the reservation settings, so split-day and overnight opening hours are listed in the hint and validated; single-window days keep their hint.
 
 ## UI language
 
