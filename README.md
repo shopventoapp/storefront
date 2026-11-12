@@ -137,6 +137,8 @@ Cloudflare references: [Static Assets bindings](https://developers.cloudflare.co
 
 CI installs from `bun.lock`, lints, type-checks, builds, runs unit, Worker integration and Playwright tests, and runs the brand check. API fixtures are synthetic and shaped against the package's public OpenAPI schema. Tests never send mail, create live reservations or charge cards.
 
+Before running Playwright, export the platform assets with `STOREFRONT_MULTI_TENANT=true bun run build`. The embed suite serves `out/` through a synthetic multi-tenant Worker and asserts German platform copy, including the top-level payment return page. The build flag is baked into those assets; setting it only on the fixture server cannot change an English export. The other default-mode browser tests use a separate English development server, so run `bun run test` without the platform flag to retain that coverage. CI checks the default build and Worker integration first, then rebuilds platform assets for the embed suite.
+
 ## Update the UI package
 
 ```sh
@@ -146,6 +148,7 @@ bun run typecheck
 bun run build
 bun run test:unit
 bun run test:worker
+STOREFRONT_MULTI_TENANT=true bun run build
 bun run test
 bun run brandcheck
 ```
