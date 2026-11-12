@@ -137,6 +137,8 @@ Cloudflare references: [Static Assets bindings](https://developers.cloudflare.co
 
 CI installs from `bun.lock`, lints, type-checks, builds, runs unit, Worker integration and Playwright tests, and runs the brand check. API fixtures are synthetic and shaped against the package's public OpenAPI schema. Tests never send mail, create live reservations or charge cards.
 
+Before running Playwright, export the platform assets with `STOREFRONT_MULTI_TENANT=true bun run build`. The embed suite serves `out/` through a synthetic multi-tenant Worker and asserts German platform copy, including the top-level payment return page. The build flag is baked into those assets; setting it only on the fixture server cannot change an English export. The other default-mode browser tests use a separate English development server, so run `bun run test` without the platform flag to retain that coverage. CI checks the default build and Worker integration first, then rebuilds platform assets for the embed suite.
+
 ## Update the UI package
 
 ```sh
@@ -146,6 +148,7 @@ bun run typecheck
 bun run build
 bun run test:unit
 bun run test:worker
+STOREFRONT_MULTI_TENANT=true bun run build
 bun run test
 bun run brandcheck
 ```
@@ -155,3 +158,17 @@ Read the [package changelog](https://github.com/shopventoapp/ui/blob/main/CHANGE
 MIT licensed. Bundled fonts retain the SIL Open Font License; see [third-party notices](THIRD_PARTY_NOTICES.md). See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 This branch uses a local 0.4.0 tarball file dependency for review. Reservation details render read-only because the public API has no rules endpoint. Account contact uses optional public company data; empty links are hidden by the package. Catalogue artwork and search/cart defaults are neutral; remaining section copy and English overrides are host editorial choices.
+
+## Tenant booking embeds
+
+`/embed/booking?location=1&service=table|tasting|both&lang=de` renders the published UI package without site navigation or footer and also works as a top-level booking link. The public location list and service capabilities determine availability. The route is noindex and omitted from the sitemap.
+
+Only the Cloudflare Worker authorizes framing. It fetches `/api/edge/embed-policy` directly with the server-only edge credential and trusted request hostname. This internal path is never exposed by the browser proxy or `tenantTransport`. Each document revalidates the host-scoped ETag; the bounded in-memory validator cache expires after 60 seconds and cannot authorize stale policy after an error. Enabled policies produce exact-origin `frame-ancestors`; all failures and disabled policies deny framing. Every other route retains `X-Frame-Options: DENY`. Embed documents have `Cache-Control: no-store`, `CDN-Cache-Control: no-store` and `Vary: Host`.
+
+Run `bun run build` before `bun run test`. Embed browser tests start `tests/fixtures/embed-server.ts` automatically on an ephemeral local port, serve the production export through the Worker handler, and map synthetic HTTPS origins to that local fixture. Set `WIDGET_EVIDENCE_DIR` to opt into screenshot output. `bun run test:worker` additionally checks headers in workerd. The ordinary Next.js development server does not enforce the production frame policy.
+
+The embed has its own root layout and imports its locale provider and table form from `@shopvento/ui/forms`. EventBooking loads through a dynamic component boundary after event selection; the shared DateList replaces the custom picker. The existing payment-availability notice is shared with the full-page route. Modern-browser payload measurements exclude `noModule` polyfills and include local fonts separately.
+
+Paid bookings keep selection and contact inline, then open the validated hosted checkout URL in a new top-level window. A German notice appears before submission and a persistent payment link supports popup-blocking browsers. The existing `/buchung` return route works top-level. Embed links use `_blank` and `noopener`, including legal links; normal booking pages retain their existing link behavior and legal pages retain DENY. Branding and frame-policy requests start concurrently; only a successful, published shell may use an allowed policy.
+
+Release gates remain: the slice-1 initial JavaScript budget is exceeded, and live tenant/backend Turnstile verification plus actual Safari ITP acceptance still require staging proof. The local live Turnstile spike uses the provider's test site key and a synthetic booking response; it is not a production booking acceptance test.

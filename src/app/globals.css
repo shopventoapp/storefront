@@ -542,3 +542,15 @@ p + p {
     align-content: start;
   }
 }
+
+.embed-booking {
+  max-width: 800px;
+  padding-block: 24px;
+}
+.embed-booking h1 {
+  font-size: 1.8rem;
+}
+.embed-booking h2 {
+  font-size: 1.5rem;
+  margin-block: 20px 12px;
+}

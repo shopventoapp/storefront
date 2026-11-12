@@ -422,3 +422,162 @@ describe("multi-tenant Worker", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
+
+test("embed policy starts before branding completes and unpublished stays denied", async () => {
+  let policyStarted = false;
+  mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+    fakeFetch(async (input) => {
+      if (String(input).includes("/api/edge/embed-policy")) {
+        policyStarted = true;
+        return Response.json({
+          enabled: true,
+          canonical_origin: "https://atelier.shopvento.app",
+          allowed_origins: [],
+          revision: "a".repeat(64),
+        });
+      }
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(policyStarted).toBe(true);
+      return Response.json({ brand_name: "Hidden", published: false });
+    }),
+  );
+  const response = await worker.fetch(
+    new Request("https://atelier.shopvento.app/embed/booking"),
+    environment(),
+  );
+  expect(policyStarted).toBe(true);
+  expect(response.headers.get("X-Frame-Options")).toBe("DENY");
+  expect(response.headers.get("Content-Security-Policy")).toBe(
+    "frame-ancestors 'none'",
+  );
+});
+
+test("embed review probes preserve deny headers, private routing, and host isolation", async () => {
+  const seen: Request[] = [];
+  mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+    fakeFetch(async (input, init) => {
+      const request = new Request(input, init);
+      seen.push(request);
+      if (request.url.includes("/api/edge/embed-policy")) {
+        const host = request.headers.get("X-Shopvento-Host");
+        if (host === "atelier.shopvento.app")
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        return Response.json({
+          enabled: true,
+          canonical_origin: `https://${host}`,
+          allowed_origins: [],
+          revision: "b".repeat(64),
+        });
+      }
+      return Response.json({ brand_name: "Published", published: true });
+    }),
+  );
+  const responses = await Promise.all(
+    ["ATELIER.SHOPVENTO.APP.:8443", "bistro.shopvento.app"].map((host) =>
+      worker.fetch(
+        new Request(`https://${host}/embed/booking`, {
+          headers: {
+            Cookie: "private=yes",
+            "X-Forwarded-Host": "forged.example",
+            "X-Shopvento-Host": "forged.example",
+          },
+        }),
+        environment(),
+      ),
+    ),
+  );
+  for (const [index, host] of [
+    "atelier.shopvento.app",
+    "bistro.shopvento.app",
+  ].entries()) {
+    expect(responses[index].headers.get("Content-Security-Policy")).toBe(
+      `frame-ancestors https://${host}`,
+    );
+    expect(responses[index].headers.get("Cache-Control")).toBe("no-store");
+    expect(responses[index].headers.get("Vary")).toBe("Host");
+    expect(responses[index].headers.has("X-Frame-Options")).toBe(false);
+  }
+  for (const request of seen.filter((item) =>
+    item.url.includes("/api/edge/"),
+  )) {
+    expect(request.headers.get("Cookie")).toBeNull();
+    expect(request.redirect).toBe("manual");
+  }
+  for (const path of [
+    "/agb/",
+    "/reservierung/",
+    "/embed/booking/index.html",
+    "/embed/%62ooking/",
+  ]) {
+    const response = await worker.fetch(
+      new Request(`https://atelier.shopvento.app${path}`),
+      environment(),
+    );
+    expect(response.headers.get("X-Frame-Options")).toBe("DENY");
+  }
+  for (const [path, status] of [
+    ["/api/edge/embed-policy", 404],
+    ["/api/shop/%2e%2e/%2e%2e/api/edge/embed-policy", 404],
+    ["/api/shop/..%2f..%2fapi/edge/embed-policy", 400],
+  ] as const) {
+    const response = await worker.fetch(
+      new Request(`https://atelier.shopvento.app${path}`, {
+        headers: { "X-Shopvento-Edge": secret },
+      }),
+      environment(),
+    );
+    expect(response.status).toBe(status);
+    expect(await response.text()).not.toContain(secret);
+  }
+});
+
+test("embed review fail-closed probes including timeout and HEAD", async () => {
+  for (const mode of [
+    "disabled",
+    "404",
+    "malformed",
+    "redirect",
+    "injection",
+    "timeout",
+  ]) {
+    mockFetch?.mockRestore();
+    mockFetch = spyOn(globalThis, "fetch").mockImplementation(
+      fakeFetch(async (input, init) => {
+        if (!String(input).includes("/api/edge/embed-policy"))
+          return Response.json({ published: true });
+        if (mode === "timeout")
+          return new Promise((_resolve, reject) =>
+            init?.signal?.addEventListener(
+              "abort",
+              () => reject(new Error("timeout")),
+              { once: true },
+            ),
+          );
+        if (mode === "404") return new Response(null, { status: 404 });
+        if (mode === "redirect")
+          return new Response(null, {
+            status: 302,
+            headers: { Location: "https://elsewhere.example" },
+          });
+        if (mode === "malformed") return new Response("{");
+        return Response.json({
+          enabled: mode !== "disabled",
+          canonical_origin: "https://atelier.shopvento.app",
+          allowed_origins:
+            mode === "injection" ? ["https://good.example;script-src *"] : [],
+          revision: "c".repeat(64),
+        });
+      }),
+    );
+    const response = await worker.fetch(
+      new Request("https://atelier.shopvento.app/embed/booking", {
+        method: "HEAD",
+      }),
+      environment(),
+    );
+    expect(response.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "frame-ancestors 'none'",
+    );
+  }
+}, 10000);

@@ -24,6 +24,12 @@ jobs:
       - run: bun run build
       - run: bun run test:unit
       - run: bun run test:worker
+      # Embed tests serve out/ through the platform Worker fixture, while the
+      # default storefront tests use the separate English development server.
+      - name: Build platform assets for embed tests
+        run: bun run build
+        env:
+          STOREFRONT_MULTI_TENANT: "true"
       - run: bunx playwright install --with-deps chromium
       - run: bun run test
       - run: bun run brandcheck

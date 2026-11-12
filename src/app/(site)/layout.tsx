@@ -1,13 +1,9 @@
 import { ShopventoProvider } from "@shopvento/ui";
-import {
-  brandingStylesheet,
-  brandingTokens,
-  loadBranding,
-} from "@shopvento/ui/branding";
+import { brandingStylesheet, loadBranding } from "@shopvento/ui/branding";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { RuntimeProvider } from "@/components/runtime";
+import { storefrontTokens } from "@/lib/branding-tokens";
 import { buildOrigin } from "@/lib/metadata";
 import { platformMode, uiLocale } from "@/lib/platform";
 import { demoName } from "@/lib/routes";
@@ -19,7 +15,8 @@ import "@shopvento/ui/styles.css";
 import "@shopvento/ui/shop.css";
 import "@shopvento/ui/shop-flow.css";
 import "@shopvento/ui/forms.css";
-import "./globals.css";
+import "../globals.css";
+import { SiteFooter, SiteHeader } from "@/components/chrome";
 
 export const metadata: Metadata = {
   metadataBase: new URL(buildOrigin),
@@ -43,28 +40,12 @@ export default async function RootLayout({
           signal: AbortSignal.timeout(4000),
         }).catch(() => ({}))
       : {};
-  const tokens = brandingTokens({
-    "--sv-background": "var(--bg)",
-    "--sv-surface": "var(--surface)",
-    "--sv-surface-2": "var(--surface)",
-    "--sv-text": "var(--ink)",
-    "--sv-text-2": "var(--muted)",
-    "--sv-text-3": "var(--muted)",
-    "--sv-primary": "var(--ink)",
-    "--sv-primary-hover": "var(--muted)",
-    "--sv-on-primary": "var(--surface)",
-    "--sv-accent": "var(--ink)",
-    "--sv-accent-fill": "var(--coral)",
-    "--sv-accent-soft": "var(--soft)",
-    "--sv-font": "var(--body)",
-    "--sv-font-display": "var(--display)",
-    "--sv-font-label": "var(--body)",
-  });
+
   return (
     <html
       lang={platformMode ? "de" : "en"}
       className="sv-redesign"
-      style={tokens as CSSProperties}
+      style={storefrontTokens as CSSProperties}
     >
       <head>
         <link rel="stylesheet" href={brandingStylesheet} />

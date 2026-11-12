@@ -6,7 +6,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/konto", "/kasse", "/warenkorb", "/bestellung", "/buchung"],
+      disallow: [
+        "/konto",
+        "/kasse",
+        "/warenkorb",
+        "/bestellung",
+        "/buchung",
+        "/embed",
+      ],
     },
     sitemap: `${buildOrigin}/sitemap.xml`,
   };
