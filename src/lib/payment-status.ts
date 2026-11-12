@@ -6,9 +6,10 @@ export interface PublicPaymentStatus {
 
 export async function loadPaymentStatus(
   signal?: AbortSignal,
+  credentials: RequestCredentials = "same-origin",
 ): Promise<PublicPaymentStatus> {
   const response = await fetch("/api/shop/payments/status", {
-    credentials: "same-origin",
+    credentials,
     cache: "no-store",
     signal,
   });

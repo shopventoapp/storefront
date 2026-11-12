@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   output: "export",
+  experimental: { globalNotFound: true },
   env: {
     NEXT_PUBLIC_STOREFRONT_PLATFORM: String(
       process.env.STOREFRONT_MULTI_TENANT === "true",

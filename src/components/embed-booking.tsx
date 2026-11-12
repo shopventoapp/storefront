@@ -2,13 +2,18 @@
 
 import {
   createBookingClient,
-  EventBooking,
+  DateList,
   useAccountResource,
 } from "@shopvento/ui";
+import { loadBranding } from "@shopvento/ui/branding";
 import { ReservationForm } from "@shopvento/ui/forms";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { publicHref, useBranding, useLegalLinks } from "./runtime";
+import { useEffect, useRef, useState } from "react";
+import { loadPaymentStatus } from "@/lib/payment-status";
+import { PaymentAvailabilityNotice } from "./payment-availability";
+
+const EventBooking = dynamic(() => import("./embed-event"), { ssr: false });
 
 const client = createBookingClient({ baseUrl: "", credentials: "omit" });
 function Unavailable() {
@@ -52,14 +57,42 @@ function Booking({
   locationId: number;
   service: string;
 }) {
-  const brand = useBranding();
-  const legal = useLegalLinks();
+  const root = useRef<HTMLDivElement>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const update = () => {
+      for (const link of root.current?.querySelectorAll("a[href]") ?? []) {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener");
+      }
+    };
+    update();
+    const observer = new MutationObserver(update);
+    if (root.current)
+      observer.observe(root.current, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  });
   const [eventId, setEventId] = useState<number | null>(null);
   const { data, loading, error } = useAccountResource(async (signal) => {
-    const [{ locations }, settings] = await Promise.all([
-      client.listLocations(signal),
-      client.getSettings(signal),
-    ]);
+    const [{ locations }, settings, branding, legal, payments] =
+      await Promise.all([
+        client.listLocations(signal),
+        client.getSettings(signal),
+        loadBranding({ signal }).catch(() => ({})),
+        fetch("/api/shop/legal", {
+          signal,
+          credentials: "omit",
+          redirect: "manual",
+        })
+          .then(async (r): Promise<Record<string, unknown>> => {
+            const value: unknown = r.ok ? await r.json() : {};
+            return value && typeof value === "object" && !Array.isArray(value)
+              ? (value as Record<string, unknown>)
+              : {};
+          })
+          .catch((): Record<string, unknown> => ({})),
+        loadPaymentStatus(signal, "omit").catch(() => null),
+      ]);
     const location = locations.find((item) => item.id === locationId);
     if (!location) return null;
     const events =
@@ -72,6 +105,14 @@ function Booking({
     return {
       location,
       settings,
+      branding,
+      legal,
+      payments,
+      timewindows: timewindows.filter(
+        (slot) =>
+          slot.franchise_location_id === locationId &&
+          events.some((event) => event.tasting_id === slot.tasting_id),
+      ),
       events: events.filter((event) =>
         timewindows.some(
           (slot) =>
@@ -87,13 +128,17 @@ function Booking({
     service !== "tasting" && data.location.table_reservations_enabled === true;
   const tasting = service !== "table" && data.events.length > 0;
   if (!table && !tasting) return <Unavailable />;
-  const termsUrl = publicHref(legal.terms_url || brand.terms_url, "/agb");
+  const termsUrl = publicHref(
+    data.legal.terms_url || (data.branding as { terms_url?: string }).terms_url,
+    "/agb",
+  );
   const privacyUrl = publicHref(
-    legal.privacy_url || brand.privacy_url,
+    data.legal.privacy_url ||
+      (data.branding as { privacy_url?: string }).privacy_url,
     "/datenschutz",
   );
   return (
-    <>
+    <div ref={root}>
       <h1>{data.location.location_name || "Deine Buchung"}</h1>
       {table && (
         <section aria-label="Tisch reservieren">
@@ -112,28 +157,29 @@ function Booking({
       {tasting && (
         <section aria-label="Veranstaltung buchen">
           <h2>Veranstaltung buchen</h2>
-          <label htmlFor="embed-event">Veranstaltung</label>
-          <select
-            id="embed-event"
-            value={eventId ?? ""}
-            onChange={(event) => setEventId(Number(event.target.value) || null)}
-          >
-            <option value="">Bitte auswählen</option>
-            {data.events
-              .filter(
-                (event, index, events) =>
-                  events.findIndex(
-                    (item) => item.tasting_id === event.tasting_id,
-                  ) === index,
-              )
-              .map((event) => (
-                <option key={event.tasting_id} value={event.tasting_id}>
-                  {event.tasting_name}
-                </option>
-              ))}
-          </select>
+          <PaymentAvailabilityNotice status={data.payments} />
+          <DateList
+            locale="de"
+            windows={data.timewindows}
+            events={data.events}
+            locations={[data.location]}
+            leadHours={data.settings.online_lead_hours ?? 24}
+            onSelect={(slot) => setEventId(slot.tasting_id)}
+          />
+          <p>Die Zahlung öffnet sich in einem neuen Fenster.</p>
+          {checkoutUrl && (
+            <p role="status">
+              <a href={checkoutUrl} target="_blank" rel="noopener">
+                Weiter zur Zahlung
+              </a>
+            </p>
+          )}
           {eventId && (
             <EventBooking
+              onRedirect={(url) => {
+                setCheckoutUrl(url);
+                window.open(url, "_blank", "noopener");
+              }}
               key={eventId}
               client={client}
               baseUrl=""
@@ -149,6 +195,16 @@ function Booking({
           )}
         </section>
       )}
-    </>
+    </div>
   );
+}
+
+function publicHref(value: unknown, fallback: string) {
+  if (typeof value !== "string") return fallback;
+  try {
+    const url = new URL(value, window.location.origin);
+    return ["https:", "http:"].includes(url.protocol) ? url.href : fallback;
+  } catch {
+    return fallback;
+  }
 }

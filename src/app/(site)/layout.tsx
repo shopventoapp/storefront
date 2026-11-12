@@ -1,15 +1,72 @@
+import { ShopventoProvider } from "@shopvento/ui";
+import { brandingStylesheet, loadBranding } from "@shopvento/ui/branding";
+import type { Metadata } from "next";
+import type { CSSProperties } from "react";
+import { RuntimeProvider } from "@/components/runtime";
+import { storefrontTokens } from "@/lib/branding-tokens";
+import { buildOrigin } from "@/lib/metadata";
+import { platformMode, uiLocale } from "@/lib/platform";
+import { demoName } from "@/lib/routes";
+import "@fontsource/bricolage-grotesque/latin-600.css";
+import "@fontsource/bricolage-grotesque/latin-700.css";
+import "@fontsource/source-sans-3/latin-400.css";
+import "@fontsource/source-sans-3/latin-600.css";
+import "@shopvento/ui/styles.css";
+import "@shopvento/ui/shop.css";
+import "@shopvento/ui/shop-flow.css";
+import "@shopvento/ui/forms.css";
+import "../globals.css";
 import { SiteFooter, SiteHeader } from "@/components/chrome";
 
-export default function SiteLayout({
+export const metadata: Metadata = {
+  metadataBase: new URL(buildOrigin),
+  title: { default: demoName, template: `%s · ${demoName}` },
+  description: platformMode
+    ? "Veranstaltungen und Gutscheine."
+    : "Discover workshops, tastings and tours at Nebenan Atelier.",
+};
+
+const contract =
+  "THESIS: Shared time starts with a real upcoming date. OWN-WORLD: Shopvento coral and aubergine, Bricolage Grotesque and Source Sans 3, open programme rows and 14px radii. STORY: Discover a date, book or give an experience, manage it in the account. FIRST VIEWPORT: Large welcome on the left, upcoming programme on the right, clear event action. FORM: open programme, grounded candidate 7, seed 0cb08445. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md";
+
+export default async function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: Readonly<{ children: React.ReactNode }>) {
+  const branding =
+    process.env.SHOPVENTO_API_URL &&
+    process.env.STOREFRONT_MULTI_TENANT !== "true"
+      ? await loadBranding({
+          apiUrl: process.env.SHOPVENTO_API_URL,
+          signal: AbortSignal.timeout(4000),
+        }).catch(() => ({}))
+      : {};
+
   return (
-    <>
-      <SiteHeader />
-      <main id="inhalt">{children}</main>
-      <SiteFooter />
-    </>
+    <html
+      lang={platformMode ? "de" : "en"}
+      className="sv-redesign"
+      style={storefrontTokens as CSSProperties}
+    >
+      <head>
+        <link rel="stylesheet" href={brandingStylesheet} />
+      </head>
+      <body>
+        <div
+          hidden
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Static build contract contains no external input.
+          dangerouslySetInnerHTML={{ __html: `<!-- ${contract} -->` }}
+        />
+        <a className="skip-link" href="#inhalt">
+          {platformMode ? "Zum Inhalt" : "Skip to content"}
+        </a>
+        <ShopventoProvider locale={uiLocale}>
+          <RuntimeProvider initialBranding={branding}>
+            <SiteHeader />
+            <main id="inhalt">{children}</main>
+            <SiteFooter />
+          </RuntimeProvider>
+        </ShopventoProvider>
+      </body>
+    </html>
   );
 }

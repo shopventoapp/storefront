@@ -1,5 +1,6 @@
 import { platformMode } from "@/lib/platform";
 import SiteLayout from "./(site)/layout";
+
 export default function NotFound() {
   return (
     <SiteLayout>

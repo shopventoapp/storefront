@@ -251,16 +251,20 @@ const handler = {
   },
 } satisfies ExportedHandler<StorefrontEnv>;
 
-const fetchEmbedPolicy = createEmbedPolicyFetcher();
+const fetchEmbedPolicy = createEmbedPolicyFetcher(((input, init) =>
+  fetch(input, init)) as typeof fetch);
 export default {
   async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
+    const isEmbed =
+      new URL(request.url).pathname.replace(/\/$/, "") === "/embed/booking";
+    const pendingPolicy = isEmbed ? fetchEmbedPolicy(request, env) : null;
     const result = await handler.fetch(request, env);
     const headers = new Headers(result.headers);
     headers.set("X-Frame-Options", "DENY");
-    if (new URL(request.url).pathname.replace(/\/$/, "") === "/embed/booking") {
+    if (isEmbed) {
       const policy =
         result.ok && !result.headers.has("Content-Security-Policy")
-          ? await fetchEmbedPolicy(request, env)
+          ? await pendingPolicy
           : null;
       headers.delete("X-Frame-Options");
       for (const [key, value] of embedHeaders(policy)) {

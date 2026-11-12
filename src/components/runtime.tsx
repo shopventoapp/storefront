@@ -14,6 +14,7 @@ import {
 } from "@/lib/payment-status";
 import { platformMode } from "@/lib/platform";
 import { demoName, privatePages, publicPages, shellPath } from "@/lib/routes";
+import { PaymentAvailabilityNotice } from "./payment-availability";
 
 export const bookingClient = createBookingClient({
   baseUrl: "",
@@ -43,19 +44,7 @@ export const usePaymentStatus = () => useContext(PaymentContext);
 
 export function PaymentAvailability() {
   const status = usePaymentStatus();
-  if (status?.online_payments_enabled !== false) return null;
-  return (
-    <p className="state" role="status">
-      {platformMode ? (
-        "Kartenzahlung ist bald verfügbar. Du kannst weiterhin Gutscheine einlösen."
-      ) : (
-        <>
-          Card payments: <span lang="de">Bald verfügbar</span>. Voucher-only
-          redemption and free reservations remain available.
-        </>
-      )}
-    </p>
-  );
+  return <PaymentAvailabilityNotice status={status} />;
 }
 
 export function publicHref(value: string | undefined, fallback: string) {
