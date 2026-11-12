@@ -50,6 +50,16 @@ beforeAll(async () => {
             : "Testatelier";
       if (host && !name)
         return Response.json({ detail: "Not found" }, { status: 404 });
+      if (path === "/api/edge/embed-policy")
+        return Response.json(
+          {
+            enabled: host === "atelier.shopvento.app",
+            canonical_origin: `https://${host}`,
+            allowed_origins: ["https://restaurant.example"],
+            revision: "a".repeat(64),
+          },
+          { headers: { ETag: `"${"a".repeat(64)}"` } },
+        );
       if (path === "/api/shop/branding")
         return Response.json({
           brand_name: name,
@@ -304,3 +314,43 @@ test.skipIf(process.env.STOREFRONT_MULTI_TENANT !== "true")(
     expect(html).not.toContain("Coming up at the atelier");
   },
 );
+
+test("embed policy is enforced by workerd without exposing its internal endpoint", async () => {
+  for (const host of [
+    "atelier.shopvento.app",
+    "bistro.shopvento.app",
+    "unknown.shopvento.app",
+    unpublishedHost,
+  ]) {
+    const response = await fetch(
+      `${platformOrigin}/embed/booking?location=1&service=both`,
+      { headers: { Host: host } },
+    );
+    // Wrangler rewrites the request host from HTTPS to HTTP for local development.
+    const enabled = host === "atelier.shopvento.app";
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      enabled
+        ? "frame-ancestors http://atelier.shopvento.app https://restaurant.example"
+        : "frame-ancestors 'none'",
+    );
+    expect(response.headers.get("X-Frame-Options")).toBe(
+      enabled ? null : "DENY",
+    );
+    expect(response.headers.get("Vary")).toContain("Host");
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("CDN-Cache-Control")).toBe("no-store");
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    expect(
+      (
+        await fetch(`${platformOrigin}/api/edge/embed-policy`, {
+          headers: { Host: host },
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await fetch(`${platformOrigin}/events`, { headers: { Host: host } })
+      ).headers.get("X-Frame-Options"),
+    ).toBe("DENY");
+  }
+});

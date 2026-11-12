@@ -6,7 +6,6 @@ import {
 } from "@shopvento/ui/branding";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { SiteFooter, SiteHeader } from "@/components/chrome";
 import { RuntimeProvider } from "@/components/runtime";
 import { buildOrigin } from "@/lib/metadata";
 import { platformMode, uiLocale } from "@/lib/platform";
@@ -80,9 +79,7 @@ export default async function RootLayout({
         </a>
         <ShopventoProvider locale={uiLocale}>
           <RuntimeProvider initialBranding={branding}>
-            <SiteHeader />
-            <main id="inhalt">{children}</main>
-            <SiteFooter />
+            {children}
           </RuntimeProvider>
         </ShopventoProvider>
       </body>

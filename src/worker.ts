@@ -1,5 +1,6 @@
 import { loadBranding } from "@shopvento/ui/branding";
 import { isShopProxyPath, proxyShopRequest } from "@shopvento/ui/proxy";
+import { createEmbedPolicyFetcher, embedHeaders } from "./lib/embed-policy";
 import { demoName, pagesFor, shellPath } from "./lib/routes";
 import { tenantTransport } from "./lib/tenant-transport";
 
@@ -44,6 +45,7 @@ async function runtimeBranding(
 }
 
 const standaloneHeaders = {
+  "Content-Security-Policy": "frame-ancestors 'none'",
   "Content-Type": "text/html; charset=utf-8",
   "Cache-Control": "no-store",
   "CDN-Cache-Control": "no-store",
@@ -65,6 +67,7 @@ const privateRoutes = [
   "/kasse",
   "/bestellung",
   "/buchung",
+  "/embed",
   "/versand",
 ];
 
@@ -88,7 +91,7 @@ function xmlEscape(value: string): string {
   );
 }
 
-export default {
+const handler = {
   async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
     const url = new URL(request.url);
     const transport = tenantTransport(request, env);
@@ -245,5 +248,30 @@ export default {
         },
       );
     return rewriter.transform(response);
+  },
+} satisfies ExportedHandler<StorefrontEnv>;
+
+const fetchEmbedPolicy = createEmbedPolicyFetcher();
+export default {
+  async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
+    const result = await handler.fetch(request, env);
+    const headers = new Headers(result.headers);
+    headers.set("X-Frame-Options", "DENY");
+    if (new URL(request.url).pathname.replace(/\/$/, "") === "/embed/booking") {
+      const policy =
+        result.ok && !result.headers.has("Content-Security-Policy")
+          ? await fetchEmbedPolicy(request, env)
+          : null;
+      headers.delete("X-Frame-Options");
+      for (const [key, value] of embedHeaders(policy)) {
+        if (key === "vary" && headers.has(key)) headers.append(key, value);
+        else headers.set(key, value);
+      }
+    }
+    return new Response(result.body, {
+      status: result.status,
+      statusText: result.statusText,
+      headers,
+    });
   },
 } satisfies ExportedHandler<StorefrontEnv>;
