@@ -367,8 +367,12 @@ for (const width of [390, 1280])
       expect(submitted).toBe(true);
       expect(page.frames()[1].url()).toBe(url);
       await popup.getByRole("link", { name: "Return to booking" }).click();
+      // The top-level return uses the storefront language, unlike the German embed.
       await expect(
-        popup.getByRole("heading", { name: "Deine Buchung", exact: true }),
+        popup.getByRole("heading", {
+          name: /^(Deine Buchung|Your booking)$/,
+          exact: true,
+        }),
       ).toBeVisible();
       expect(popup.mainFrame().parentFrame()).toBeNull();
     });

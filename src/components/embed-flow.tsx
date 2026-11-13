@@ -180,7 +180,7 @@ function Booking({
       {tasting && (
         <section aria-label="Veranstaltung buchen">
           <h2>Veranstaltung buchen</h2>
-          <PaymentAvailabilityNotice status={data.payments} />
+          <PaymentAvailabilityNotice status={data.payments} locale="de" />
           <DateList
             locale="de"
             windows={data.timewindows}
