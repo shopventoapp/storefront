@@ -27,6 +27,13 @@ const restaurant: Restaurant = {
         { weekday: 4, opens: "17:30", closes: "01:00" },
       ],
       opening_exceptions: [
+        {
+          from: "2026-11-20",
+          until: "2026-11-20",
+          closed_from: "2026-11-20T17:00:00Z",
+          closed_until: "2026-11-20T19:00:00Z",
+          label: "Geschlossene Gesellschaft",
+        },
         { from: "2026-12-24", until: "2026-12-26", label: "Weihnachten" },
         {
           from: "2026-12-31",
@@ -145,6 +152,12 @@ for (const width of [390, 1280])
         }
         if (title === "locations") {
           await expect(page).toHaveTitle(/Standorte/);
+          await expect(
+            page.getByText(
+              "Geschlossen: 18:00 - 20:00 Uhr · Geschlossene Gesellschaft",
+              { exact: true },
+            ),
+          ).toBeVisible();
           await expect(
             page.getByRole("heading", { name: "Gartenküche" }),
           ).toBeVisible();

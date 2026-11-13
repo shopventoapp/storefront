@@ -134,23 +134,11 @@ export function dayWindows(
       ([start, end]) => [start, Math.min(end, 1440)] as [number, number],
     ),
   ];
-  const localStamp = (value: string) => {
-    if (!/(Z|[+-]\d\d:\d\d)$/.test(value)) return value.slice(0, 16);
-    const parts = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "Europe/Berlin",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).format(new Date(value));
-    return parts.replace(" ", "T");
-  };
+
   for (const exception of location.opening_exceptions) {
     if (!exception.closed_from || !exception.closed_until) continue;
-    const start = localStamp(exception.closed_from),
-      end = localStamp(exception.closed_until);
+    const start = berlinTimestamp(exception.closed_from),
+      end = berlinTimestamp(exception.closed_until);
     if (start.slice(0, 10) > date || end.slice(0, 10) < date) continue;
     const low = start.slice(0, 10) < date ? 0 : minutes(start.slice(11));
     const high = end.slice(0, 10) > date ? 1440 : minutes(end.slice(11));
@@ -191,4 +179,18 @@ export function reservationLocation<
     locations.find((location) => location.table_reservations_enabled) ??
     locations[0]
   );
+}
+
+export function berlinTimestamp(value: string) {
+  if (!/(Z|[+-]\d\d:\d\d)$/.test(value)) return value.slice(0, 16);
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(value));
+  return parts.replace(" ", "T");
 }

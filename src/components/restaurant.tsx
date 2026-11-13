@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   address,
   berlinDate,
+  berlinTimestamp,
   dayWindows,
   intervalLabel,
   type MenuSection,
@@ -186,7 +187,7 @@ function LocationHours({ location }: { location: RestaurantLocation }) {
                 </strong>
                 <span>
                   {row.closed_from && row.closed_until
-                    ? `Geschlossen: ${row.closed_from.slice(11, 16)} - ${row.closed_until.slice(11, 16)} Uhr`
+                    ? `Geschlossen: ${berlinTimestamp(row.closed_from).slice(11, 16)} - ${berlinTimestamp(row.closed_until).slice(11, 16)} Uhr`
                     : row.opens && row.closes
                       ? intervalLabel(row.opens, row.closes)
                       : "Geschlossen"}

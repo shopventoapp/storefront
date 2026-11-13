@@ -98,3 +98,10 @@ test("location actions select only published reservable locations", async () => 
   expect(reservationLocation(locations, "3")?.id).toBe(1);
   expect(reservationLocation(locations, "999")?.id).toBe(1);
 });
+
+test("timed exception labels convert absolute timestamps to Berlin time", async () => {
+  const { berlinTimestamp } = await import("../../src/lib/restaurant");
+  expect(berlinTimestamp("2026-11-13T17:00:00Z")).toBe("2026-11-13T18:00");
+  expect(berlinTimestamp("2026-07-13T22:00:00Z")).toBe("2026-07-14T00:00");
+  expect(berlinTimestamp("2026-11-13T18:00")).toBe("2026-11-13T18:00");
+});
