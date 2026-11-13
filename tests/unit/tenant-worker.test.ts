@@ -55,6 +55,7 @@ describe("multi-tenant Worker", () => {
       for (const path of [
         "/events",
         "/api/shop/settings",
+        "/api/shop/restaurant",
         "/branding/theme.css",
         fontPath,
         "/gutscheine",
@@ -267,6 +268,7 @@ describe("multi-tenant Worker", () => {
         );
         for (const path of [
           "/api/shop/settings",
+          "/api/shop/restaurant",
           "/api/shop/branding",
           "/api/shop/media/logo",
           "/branding/theme.css",
@@ -283,7 +285,7 @@ describe("multi-tenant Worker", () => {
         }
       }),
     );
-    expect(seen).toHaveLength(21);
+    expect(seen).toHaveLength(24);
     expect(seen.every(({ host }) => host in names)).toBe(true);
   });
 
@@ -299,6 +301,7 @@ describe("multi-tenant Worker", () => {
       for (const path of [
         "/events",
         "/api/shop/settings",
+        "/api/shop/restaurant",
         "/branding/theme.css",
         fontPath,
       ]) {

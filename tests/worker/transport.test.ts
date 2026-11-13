@@ -305,8 +305,11 @@ test.skipIf(process.env.STOREFRONT_MULTI_TENANT !== "true")(
     const html = await response.text();
     expect(response.status).toBe(200);
     expect(html).toContain('lang="de"');
-    expect(html).toContain("Gutscheine verschenken");
-    expect(html).toContain("Kommende Veranstaltungen");
+    expect(html).toContain("Plane Deinen Besuch");
+    // Module actions wait for tenant data rather than being baked into the shared export.
+    expect(html).not.toContain('href="/gutscheine"');
+    expect(html).not.toContain('href="/speisekarte"');
+    expect(html).not.toContain("Kommende Veranstaltungen");
     expect(html).not.toContain("Nebenan Atelier");
     expect(html).not.toContain("Reserviere Deinen Tisch");
     expect(html).not.toContain("Reservierungen, Veranstaltungen");

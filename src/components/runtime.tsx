@@ -13,6 +13,7 @@ import {
   type PublicPaymentStatus,
 } from "@/lib/payment-status";
 import { platformMode } from "@/lib/platform";
+import { hasMenu, loadRestaurant, reservationLocation } from "@/lib/restaurant";
 import { demoName, privatePages, publicPages, shellPath } from "@/lib/routes";
 import { PaymentAvailabilityNotice } from "./payment-availability";
 
@@ -26,9 +27,19 @@ export type { Branding } from "@shopvento/ui/branding";
 const shopClient = createShopClient();
 const DiscoveryContext = createContext<{
   hasShop: boolean;
+  hasEvents: boolean;
+  hasVouchers: boolean;
+  hasMenu: boolean;
   locations: Location[];
   ready: boolean;
-}>({ hasShop: false, locations: [], ready: false });
+}>({
+  hasShop: false,
+  hasEvents: false,
+  hasVouchers: false,
+  hasMenu: false,
+  locations: [],
+  ready: false,
+});
 export const useDiscovery = () => useContext(DiscoveryContext);
 const LegalLinksContext = createContext<{
   links: Record<string, string>;
@@ -36,6 +47,14 @@ const LegalLinksContext = createContext<{
 }>({ links: {}, ready: false });
 export const useLegalResource = () => useContext(LegalLinksContext);
 export const useLegalLinks = () => useLegalResource().links;
+
+const RestaurantContext = createContext<{
+  data: import("@/lib/restaurant").Restaurant | null;
+  loading: boolean;
+  error: unknown;
+  reload: () => void;
+}>({ data: null, loading: true, error: null, reload: () => {} });
+export const useRestaurant = () => useContext(RestaurantContext);
 
 const BrandContext = createContext<Branding>({});
 export const useBranding = () => useContext(BrandContext);
@@ -97,6 +116,12 @@ export function RuntimeProvider({
         ),
       ) as Record<string, string>;
     },
+  );
+  const restaurant = useAccountResource(async (signal) =>
+    platformMode ? loadRestaurant(signal) : null,
+  );
+  const { data: events, loading: eventsLoading } = useAccountResource(
+    async (signal) => (platformMode ? bookingClient.listEvents(signal) : null),
   );
   const { data: payments } = useAccountResource(loadPaymentStatus);
   useEffect(() => {
@@ -168,14 +193,34 @@ export function RuntimeProvider({
             catalogue?.articles.some(
               (article) => article.type === "PHYSICAL",
             ) ?? false,
-          locations: locationData?.locations ?? [],
-          ready: !locationsLoading && !catalogueLoading,
+          hasEvents:
+            restaurant.data?.modules.events !== false && !!events?.length,
+          hasVouchers:
+            restaurant.data?.modules.vouchers !== false &&
+            !!catalogue?.vouchers?.length,
+          hasMenu: hasMenu(restaurant.data?.menu?.sections ?? []),
+          locations:
+            restaurant.data?.locations ?? locationData?.locations ?? [],
+          ready:
+            !locationsLoading &&
+            !catalogueLoading &&
+            !eventsLoading &&
+            !restaurant.loading,
         }}
       >
         <LegalLinksContext
           value={{ links: legal ?? {}, ready: !legalLoading && brandingReady }}
         >
-          <PaymentContext value={payments ?? null}>{children}</PaymentContext>
+          <RestaurantContext
+            value={{
+              data: restaurant.data ?? null,
+              loading: restaurant.loading,
+              error: restaurant.error,
+              reload: restaurant.reload,
+            }}
+          >
+            <PaymentContext value={payments ?? null}>{children}</PaymentContext>
+          </RestaurantContext>
         </LegalLinksContext>
       </DiscoveryContext>
     </BrandContext>
@@ -195,10 +240,11 @@ export async function publicApi() {
   return {
     shopvento: true,
     locationId:
-      (
-        data.locations.find(
-          (location) => location.table_reservations_enabled,
-        ) ?? data.locations[0]
+      reservationLocation(
+        data.locations,
+        typeof window === "undefined"
+          ? null
+          : new URLSearchParams(window.location.search).get("location"),
       )?.id ?? null,
   };
 }

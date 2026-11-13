@@ -41,6 +41,7 @@ describe("instance configuration", () => {
   });
   test("keeps non-shop APIs outside the proxy", () => {
     expect(isShopProxyPath("/api/shop/articles/")).toBe(true);
+    expect(isShopProxyPath("/api/shop/restaurant")).toBe(true);
     expect(isShopProxyPath("/branding/theme.css")).toBe(true);
     expect(isShopProxyPath("/api/table-reservations/public/settings")).toBe(
       true,
