@@ -174,3 +174,16 @@ The embed has its own root layout and imports its locale provider and table form
 Paid bookings keep selection and contact inline, then open the validated hosted checkout URL in a new top-level window. A German notice appears before submission and a persistent payment link supports popup-blocking browsers. The existing `/buchung` return route works top-level. Embed links use `_blank` and `noopener`, including legal links; normal booking pages retain their existing link behavior and legal pages retain DENY. Branding and frame-policy requests start concurrently; only a successful, published shell may use an allowed policy.
 
 Release gates remain: the slice-1 initial JavaScript budget is exceeded, and live tenant/backend Turnstile verification plus actual Safari ITP acceptance still require staging proof. The local live Turnstile spike uses the provider's test site key and a synthetic booking response; it is not a production booking acceptance test.
+
+### Embedded booking verification
+
+Build with `STOREFRONT_MULTI_TENANT=true bun run build`, then run
+`bunx playwright test --config=playwright.embed.config.ts`. This suite serves the
+production export through its Worker fixture and does not start the unrelated
+Next development server. `WIDGET_EVIDENCE_DIR` optionally saves screenshots.
+
+`/embed/loader.js` mounts anchors with `data-shopvento="inline"` or `"popup"`.
+The anchor remains a usable booking link without JavaScript. Analytics starts
+only when the tenant setting permits it and the host consent manager calls
+`window.ShopventoBooking.setConsent(true)`; pass `false` on withdrawal. Events
+carry only a coarse service and outcome, never guest or booking identifiers.

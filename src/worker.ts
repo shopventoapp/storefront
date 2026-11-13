@@ -255,6 +255,31 @@ const fetchEmbedPolicy = createEmbedPolicyFetcher(((input, init) =>
   fetch(input, init)) as typeof fetch);
 export default {
   async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
+    if (new URL(request.url).pathname === "/embed/config") {
+      const policy = await fetchEmbedPolicy(request, env);
+      return Response.json(
+        {
+          allowed_origins: policy?.enabled
+            ? [
+                policy.canonical_origin,
+                ...policy.allowed_origins,
+                ...(policy.preview_origin ? [policy.preview_origin] : []),
+              ]
+            : [],
+          analytics:
+            policy?.enabled === true &&
+            policy.analytics_events_enabled === true,
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store",
+            "CDN-Cache-Control": "no-store",
+            Vary: "Host",
+            "X-Frame-Options": "DENY",
+          },
+        },
+      );
+    }
     const isEmbed =
       new URL(request.url).pathname.replace(/\/$/, "") === "/embed/booking";
     const pendingPolicy = isEmbed ? fetchEmbedPolicy(request, env) : null;

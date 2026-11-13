@@ -1,5 +1,4 @@
 import { brandingStylesheet } from "@shopvento/ui/branding";
-import { ShopventoProvider } from "@shopvento/ui/forms";
 import type { CSSProperties } from "react";
 import { storefrontTokens } from "@/lib/branding-tokens";
 import "@fontsource/bricolage-grotesque/latin-600.css";
@@ -21,9 +20,7 @@ export default function EmbedLayout({
       <head>
         <link rel="stylesheet" href={brandingStylesheet} />
       </head>
-      <body>
-        <ShopventoProvider locale="de">{children}</ShopventoProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

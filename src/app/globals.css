@@ -676,4 +676,15 @@ p + p {
   .gastro-actions {
     gap: 12px 20px;
   }
+
+.embed-booking nav[aria-label="Angebot auswählen"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.embed-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
 }
