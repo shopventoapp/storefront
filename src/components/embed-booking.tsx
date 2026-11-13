@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { EmbedBridge } from "./embed-bridge";
+import { useResource } from "./embed-resource";
 
 const Flow = dynamic(() => import("./embed-flow"), {
   ssr: false,
@@ -15,6 +16,22 @@ export function EmbedBooking() {
   const location = params.get("location") || "";
   const offered = params.get("service") || "both";
   const [selected, setSelected] = useState("");
+  const {
+    data: settings,
+    loading,
+    error,
+  } = useResource(async (signal) => {
+    const response = await fetch("/api/shop/settings", {
+      signal,
+      credentials: "omit",
+    });
+    if (!response.ok) throw new Error("Unavailable");
+    return response.json() as Promise<{
+      guest_address?: "du" | "sie";
+      guest_shop_checkout_enabled?: boolean;
+    }>;
+  });
+  const formal = settings?.guest_address === "sie";
   if (
     !/^[1-9]\d*$/.test(location) ||
     !Number.isSafeInteger(Number(location)) ||
@@ -24,6 +41,9 @@ export function EmbedBooking() {
     (params.has("lang") && params.get("lang") !== "de")
   )
     return <p role="status">Dieses Angebot ist gerade nicht verfügbar.</p>;
+  if (loading) return <p role="status">Angebote werden geladen …</p>;
+  if (error || !settings)
+    return <p role="status">Dieses Angebot ist gerade nicht verfügbar.</p>;
   const services = [
     { key: "table", label: "Tisch reservieren" },
     { key: "tasting", label: "Veranstaltung buchen" },
@@ -31,10 +51,13 @@ export function EmbedBooking() {
     { key: "private", label: "Private Veranstaltung anfragen" },
   ].filter(
     (item) =>
-      offered === "all" ||
-      offered === item.key ||
-      (offered === "both" && ["table", "tasting"].includes(item.key)),
+      (item.key !== "voucher" ||
+        settings.guest_shop_checkout_enabled === true) &&
+      (offered === "all" ||
+        offered === item.key ||
+        (offered === "both" && ["table", "tasting"].includes(item.key))),
   );
+  const active = services.some((item) => item.key === selected) ? selected : "";
   return (
     <>
       <EmbedBridge />
@@ -44,7 +67,7 @@ export function EmbedBooking() {
             type="button"
             className="button"
             key={item.key}
-            aria-pressed={selected === item.key}
+            aria-pressed={active === item.key}
             onClick={() => {
               setSelected(item.key);
               window.dispatchEvent(
@@ -58,14 +81,20 @@ export function EmbedBooking() {
           </button>
         ))}
       </nav>
-      {selected === "voucher" ? (
+      {active === "voucher" ? (
         <Voucher />
-      ) : selected === "private" ? (
+      ) : active === "private" ? (
         <Inquiry locationId={Number(location)} />
-      ) : selected ? (
-        <Flow service={selected} />
+      ) : active ? (
+        <Flow service={active} formal={formal} />
       ) : (
-        <p>Wähle Dein Angebot, um zu starten.</p>
+        <p>
+          {services.length === 0
+            ? "Dieses Angebot ist gerade nicht verfügbar."
+            : formal
+              ? "Wählen Sie Ihr Angebot, um zu starten."
+              : "Wähle Dein Angebot, um zu starten."}
+        </p>
       )}
       <p>
         <a href="/konto" target="_blank" rel="noopener">

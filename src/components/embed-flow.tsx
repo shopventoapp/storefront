@@ -16,13 +16,14 @@ import { PaymentAvailabilityNotice } from "./payment-availability";
 const EventBooking = dynamic(() => import("./embed-event"), { ssr: false });
 
 const client = createBookingClient({ baseUrl: "", credentials: "omit" });
-function Unavailable() {
+function Unavailable({ formal = false }: { formal?: boolean }) {
   return (
     <div role="status">
       <h1>Aktuell keine Buchung möglich</h1>
       <p>
-        Dieses Angebot ist gerade nicht verfügbar. Bitte versuche es später
-        erneut.
+        {formal
+          ? "Dieses Angebot ist gerade nicht verfügbar. Bitte versuchen Sie es später erneut."
+          : "Dieses Angebot ist gerade nicht verfügbar. Bitte versuche es später erneut."}
       </p>
     </div>
   );
@@ -30,8 +31,10 @@ function Unavailable() {
 
 export default function EmbedFlow({
   service: selectedService,
+  formal = false,
 }: {
   service: string;
+  formal?: boolean;
 }) {
   const params = useSearchParams();
   const value = params.get("location") ?? "";
@@ -44,12 +47,13 @@ export default function EmbedFlow({
     locationId !== null &&
     ["table", "tasting", "both"].includes(service) &&
     (!params.has("lang") || params.get("lang") === "de");
-  if (!valid) return <Unavailable />;
+  if (!valid) return <Unavailable formal={formal} />;
   return (
     <Booking
       key={`${locationId}:${service}`}
       locationId={locationId}
       service={service}
+      formal={formal}
     />
   );
 }
@@ -57,9 +61,11 @@ export default function EmbedFlow({
 function Booking({
   locationId,
   service,
+  formal = false,
 }: {
   locationId: number;
   service: string;
+  formal?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -127,11 +133,11 @@ function Booking({
     };
   });
   if (loading) return <p role="status">Buchung wird geladen …</p>;
-  if (error || !data) return <Unavailable />;
+  if (error || !data) return <Unavailable formal={formal} />;
   const table =
     service !== "tasting" && data.location.table_reservations_enabled === true;
   const tasting = service !== "table" && data.events.length > 0;
-  if (!table && !tasting) return <Unavailable />;
+  if (!table && !tasting) return <Unavailable formal={formal} />;
   const termsUrl = publicHref(
     data.legal.terms_url || (data.branding as { terms_url?: string }).terms_url,
     "/agb",

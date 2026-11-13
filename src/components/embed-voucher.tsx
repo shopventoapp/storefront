@@ -19,15 +19,13 @@ export default function EmbedVoucher() {
       !/\/kasse\/(erfolg|abgebrochen)/.test(url.pathname)
     )
       setPath(url.pathname + url.search);
-    else if (
-      url.protocol === "https:" &&
-      (url.origin === window.location.origin ||
-        (url.hostname === "checkout.stripe.com" &&
-          !url.username &&
-          !url.password))
-    ) {
-      setCheckout(url.href);
-      window.open(url.href, "_blank", "noopener");
+    else if (url.protocol === "https:" && !url.username && !url.password) {
+      if (url.hostname === "checkout.stripe.com") {
+        setCheckout(url.href);
+        window.open(url.href, "_blank", "noopener");
+      } else if (url.origin === window.location.origin) {
+        window.open(url.href, "_blank", "noopener");
+      }
     }
   }
   return (

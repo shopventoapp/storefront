@@ -33,6 +33,9 @@ export default function EmbedInquiry({ locationId }: { locationId: number }) {
     return <p role="status">Dieses Angebot ist gerade nicht verfügbar.</p>;
   if (result) return <p role="status">{result}</p>;
   const formal = data.guest_address === "sie";
+  const unknownOutcome = formal
+    ? "Das Ergebnis ist unklar. Bitte fragen Sie beim Standort nach, bevor Sie erneut anfragen."
+    : "Das Ergebnis ist unklar. Bitte frage beim Standort nach, bevor Du erneut anfragst.";
   return (
     <form
       className="sv-booking"
@@ -58,22 +61,34 @@ export default function EmbedInquiry({ locationId }: { locationId: number }) {
             }),
           });
           if (!response.ok) {
-            if (response.status < 500) submitted.current = false;
+            if (response.status >= 500) throw new Error(unknownOutcome);
+            submitted.current = false;
+            const problem = (await response.json().catch(() => null)) as {
+              detail?: unknown;
+            } | null;
             throw new Error(
-              response.status === 429
-                ? "Bitte warte einen Moment, bevor Du es erneut versuchst."
-                : "Deine Anfrage konnte nicht verarbeitet werden. Bitte prüfe Deine Angaben.",
+              typeof problem?.detail === "string" && problem.detail.trim()
+                ? problem.detail
+                : response.status === 429
+                  ? formal
+                    ? "Bitte warten Sie einen Moment, bevor Sie es erneut versuchen."
+                    : "Bitte warte einen Moment, bevor Du es erneut versuchst."
+                  : formal
+                    ? "Ihre Anfrage konnte nicht verarbeitet werden. Bitte prüfen Sie Ihre Angaben."
+                    : "Deine Anfrage konnte nicht verarbeitet werden. Bitte prüfe Deine Angaben.",
             );
           }
           const outcome = (await response.json()) as {
             status?: string;
             message?: string;
           };
-          if (outcome.status !== "inquiry")
-            throw new Error(
-              "Das Ergebnis ist unklar. Bitte frage beim Standort nach, bevor Du erneut anfragst.",
-            );
-          setResult(outcome.message || "Deine Anfrage ist eingegangen.");
+          if (outcome.status !== "inquiry") throw new Error(unknownOutcome);
+          setResult(
+            outcome.message ||
+              (formal
+                ? "Ihre Anfrage ist eingegangen."
+                : "Deine Anfrage ist eingegangen."),
+          );
           window.dispatchEvent(
             new CustomEvent("shopvento:embed", {
               detail: { event: "booking_pending", service: "private" },
@@ -81,8 +96,8 @@ export default function EmbedInquiry({ locationId }: { locationId: number }) {
           );
         } catch (reason) {
           setFailed(
-            reason instanceof TypeError
-              ? "Das Ergebnis ist unklar. Bitte frage beim Standort nach, bevor Du erneut anfragst."
+            submitted.current
+              ? unknownOutcome
               : reason instanceof Error
                 ? reason.message
                 : "Die Anfrage ist derzeit nicht möglich.",

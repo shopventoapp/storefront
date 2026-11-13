@@ -83,6 +83,7 @@ export function EmbedBridge() {
     const analytics = (event: Event) => {
       const detail = (event as CustomEvent).detail;
       if (
+        policy?.analytics === true &&
         detail &&
         [
           "booking_started",

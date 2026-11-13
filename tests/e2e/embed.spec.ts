@@ -396,6 +396,7 @@ for (const width of [390, 1280])
     }) => {
       await page.setViewportSize({ width, height: 1000 });
       await page.emulateMedia({ colorScheme });
+      await mockShop(page);
       await page.route("https://restaurant.example/**", (route) =>
         route.fulfill({
           contentType: "text/html",
@@ -617,6 +618,28 @@ test("voucher service keeps catalogue and cart inside the embed without login", 
   await expect(
     page.getByRole("button", { name: "Als Gast fortfahren" }),
   ).toHaveCount(0);
+  for (const name of ["AGB", "Widerruf", "Datenschutz"]) {
+    const legal = page
+      .locator('section[aria-label="Gutschein kaufen"]')
+      .getByRole("link", { name, exact: false })
+      .first();
+    const opened = context.waitForEvent("page");
+    await legal.click();
+    const tab = await opened;
+    await expect(tab).toHaveURL(
+      new RegExp(
+        name === "AGB"
+          ? "/agb"
+          : name === "Widerruf"
+            ? "/widerruf"
+            : "/datenschutz",
+      ),
+    );
+    await expect(
+      page.getByRole("link", { name: "Weiter zur Zahlung", exact: true }),
+    ).toHaveCount(0);
+    await tab.close();
+  }
   await page.locator("#first_name").fill("Demo");
   await page.locator("#last_name").fill("Guest");
   await page.locator("#email").fill("demo@example.org");
@@ -710,6 +733,7 @@ for (const width of [390, 1280])
 test("owner analytics opt-out reaches an open widget within a minute", async ({
   page,
 }) => {
+  await mockShop(page);
   let permitted = true;
   await page.clock.install();
   await page.route(`${origin}/embed/config`, (route) =>
@@ -771,4 +795,186 @@ test("owner analytics opt-out reaches an open widget within a minute", async ({
       () => (window as unknown as { dataLayer: unknown[] }).dataLayer.length,
     ),
   ).toBe(1);
+});
+
+for (const service of ["all", "voucher"]) {
+  test(`disabled guest checkout hides voucher entry for ${service}`, async ({
+    page,
+  }) => {
+    await mockShop(page);
+    await page.route("**/api/shop/settings", (route) =>
+      route.fulfill({
+        json: { ...settings, guest_shop_checkout_enabled: false },
+      }),
+    );
+    await page.goto(`${origin}/embed/booking?location=1&service=${service}`);
+    await expect(
+      page.getByText(
+        service === "all"
+          ? "Wähle Dein Angebot, um zu starten."
+          : "Dieses Angebot ist gerade nicht verfügbar.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Gutschein kaufen", exact: true }),
+    ).toHaveCount(0);
+  });
+}
+
+for (const address of ["du", "sie"]) {
+  for (const status of [0, 200, 400, 422, 429, 503]) {
+    test(`inquiry errors ${address} ${status} preserve address and retry semantics`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 1000 });
+      await page.emulateMedia({
+        colorScheme: address === "sie" ? "dark" : "light",
+      });
+      await mockShop(page);
+      await page.route("**/api/shop/settings", (route) =>
+        route.fulfill({ json: { ...settings, guest_address: address } }),
+      );
+      await page.route("https://challenges.cloudflare.com/**", (route) =>
+        route.fulfill({
+          contentType: "application/javascript",
+          body: "window.turnstile={render:(_,o)=>{queueMicrotask(()=>o.callback('synthetic'));return 'w';},remove:()=>{},reset:()=>{}}",
+        }),
+      );
+      const reason =
+        address === "sie"
+          ? "Bitte wählen Sie einen zukünftigen Termin."
+          : "Bitte wähle einen zukünftigen Termin.";
+      await page.route("**/api/shop/private-event-requests", (route) =>
+        status === 0
+          ? route.abort("failed")
+          : route.fulfill({
+              status,
+              json: status === 422 ? { detail: reason } : {},
+            }),
+      );
+      await page.goto(`${origin}/embed/booking?location=1&service=private`);
+      await expect(
+        page.getByText(
+          address === "sie"
+            ? "Wählen Sie Ihr Angebot, um zu starten."
+            : "Wähle Dein Angebot, um zu starten.",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await page
+        .getByRole("button", {
+          name: "Private Veranstaltung anfragen",
+          exact: true,
+        })
+        .click();
+      const form = page.locator("form.sv-booking");
+      await expect(
+        form.getByText(address === "sie" ? "Ihr Name" : "Dein Name", {
+          exact: true,
+        }),
+      ).toBeVisible();
+      for (const [name, value] of Object.entries({
+        title: "Feier",
+        contact_name: "Test Guest",
+        contact_email: "guest@example.org",
+        date: "2027-01-04",
+        start_time: "18:00",
+        end_time: "22:00",
+        guests_provisional: "20",
+      }))
+        await form.locator(`[name="${name}"]`).fill(value);
+      await form.getByRole("checkbox").check();
+      await form.getByRole("button", { name: /Anfrage senden/ }).click();
+      await expect(form.getByRole("alert")).toHaveText(
+        status === 422
+          ? reason
+          : status === 429
+            ? address === "sie"
+              ? "Bitte warten Sie einen Moment, bevor Sie es erneut versuchen."
+              : "Bitte warte einen Moment, bevor Du es erneut versuchst."
+            : status === 400
+              ? address === "sie"
+                ? "Ihre Anfrage konnte nicht verarbeitet werden. Bitte prüfen Sie Ihre Angaben."
+                : "Deine Anfrage konnte nicht verarbeitet werden. Bitte prüfe Deine Angaben."
+              : address === "sie"
+                ? "Das Ergebnis ist unklar. Bitte fragen Sie beim Standort nach, bevor Sie erneut anfragen."
+                : "Das Ergebnis ist unklar. Bitte frage beim Standort nach, bevor Du erneut anfragst.",
+      );
+      if (process.env.WIDGET_EVIDENCE_DIR && status === 503)
+        await page.screenshot({
+          path: join(
+            process.env.WIDGET_EVIDENCE_DIR,
+            `inquiry-error-${address}-390.png`,
+          ),
+          fullPage: true,
+        });
+      if (status >= 400 && status < 500)
+        await expect(
+          form.getByRole("button", { name: /Anfrage senden/ }),
+        ).toBeEnabled();
+      else
+        await expect(
+          form.getByRole("button", { name: /Anfrage senden/ }),
+        ).toBeDisabled();
+    });
+  }
+}
+
+test("analytics off sends no booking events to the host", async ({ page }) => {
+  await mockShop(page);
+  await page.route(`${origin}/embed/config`, (route) =>
+    route.fulfill({
+      json: {
+        allowed_origins: ["https://restaurant.example"],
+        analytics: false,
+      },
+    }),
+  );
+  await page.route("https://restaurant.example/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: `<script>window.received=[];addEventListener('message', e=>window.received.push(e.data.event))</script><a href="${origin}/embed/booking?location=1&service=all" data-shopvento="inline">Buchen</a><script src="${origin}/embed/loader.js" defer></script>`,
+    }),
+  );
+  await page.goto("https://restaurant.example/");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { received: string[] }).received.includes(
+          "resize",
+        ),
+      ),
+    )
+    .toBe(true);
+  await page
+    .frameLocator("iframe")
+    .getByRole("button", { name: "Gutschein kaufen", exact: true })
+    .click();
+  const child = page.frames().find((frame) => frame.url().startsWith(origin));
+  if (!child) throw new Error("Missing frame");
+  await child.evaluate(() => {
+    window.dispatchEvent(
+      new CustomEvent("shopvento:embed", {
+        detail: { event: "booking_confirmed", service: "private" },
+      }),
+    );
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { received: string[] }).received.includes(
+          "close_requested",
+        ),
+      ),
+    )
+    .toBe(true);
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as { received: string[] }).received.filter((event) =>
+        event?.startsWith("booking_"),
+      ),
+    ),
+  ).toEqual([]);
 });
