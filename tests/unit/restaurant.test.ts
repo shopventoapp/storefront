@@ -5,6 +5,7 @@ import {
   hasMenu,
   intervalLabel,
   type RestaurantLocation,
+  todayWindows,
 } from "../../src/lib/restaurant";
 
 const location: RestaurantLocation = {
@@ -104,4 +105,31 @@ test("timed exception labels convert absolute timestamps to Berlin time", async 
   expect(berlinTimestamp("2026-11-13T17:00:00Z")).toBe("2026-11-13T18:00");
   expect(berlinTimestamp("2026-07-13T22:00:00Z")).toBe("2026-07-14T00:00");
   expect(berlinTimestamp("2026-11-13T18:00")).toBe("2026-11-13T18:00");
+});
+
+test("today display retains overnight closing and previous-day carry", () => {
+  expect(todayWindows(location, "2026-11-13")).toEqual([
+    ["12:00", "14:30"],
+    ["17:30", "02:00"],
+  ]);
+  expect(todayWindows(location, "2026-11-14")).toEqual([["00:00", "02:00"]]);
+});
+
+test("today display subtracts timed closures across midnight", () => {
+  const closed = {
+    ...location,
+    opening_exceptions: [
+      {
+        from: "2026-11-14",
+        until: "2026-11-14",
+        closed_from: "2026-11-14T00:30",
+        closed_until: "2026-11-14T01:00",
+      },
+    ],
+  };
+  expect(todayWindows(closed, "2026-11-13")).toEqual([
+    ["12:00", "14:30"],
+    ["17:30", "00:30"],
+    ["01:00", "02:00"],
+  ]);
 });

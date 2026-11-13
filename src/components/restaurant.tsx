@@ -5,10 +5,10 @@ import {
   address,
   berlinDate,
   berlinTimestamp,
-  dayWindows,
   intervalLabel,
   type MenuSection,
   type RestaurantLocation,
+  todayWindows,
   weekdays,
 } from "@/lib/restaurant";
 import { publicHref, useRestaurant } from "./runtime";
@@ -22,7 +22,7 @@ export function TodayHours({ location }: { location: RestaurantLocation }) {
     return () => clearInterval(timer);
   }, []);
   if (!date) return null;
-  const windows = dayWindows(location, date);
+  const windows = todayWindows(location, date);
   return (
     <p className="today-hours">
       <strong>Heute:</strong>{" "}
@@ -30,7 +30,7 @@ export function TodayHours({ location }: { location: RestaurantLocation }) {
         ? "Öffnungszeiten auf Anfrage"
         : windows.length
           ? windows
-              .map(([opens, closes]) => `${opens} - ${closes} Uhr`)
+              .map(([opens, closes]) => intervalLabel(opens, closes))
               .join(" · ")
           : "Geschlossen"}
     </p>
@@ -92,9 +92,16 @@ function MenuGroup({
                 ))}
               </div>
             </div>
-            {item.beschreibung_md && (
+            {item.beschreibung_html ? (
+              <div
+                className="restaurant-copy"
+                // The public API renders inventory Markdown with render_markdown_safe.
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: server-sanitized public projection
+                dangerouslySetInnerHTML={{ __html: item.beschreibung_html }}
+              />
+            ) : item.beschreibung_md ? (
               <p className="restaurant-copy">{item.beschreibung_md}</p>
-            )}
+            ) : null}
             {item.allergene && (
               <p className="menu-hints">Allergene: {item.allergene}</p>
             )}

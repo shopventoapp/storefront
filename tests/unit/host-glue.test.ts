@@ -83,3 +83,15 @@ test("platform metadata makes no reservation claim outside the reservation route
       expect(page.description).not.toMatch(/reservier|Tisch/i);
   }
 });
+
+test("restaurant routes are indexed only in platform mode", async () => {
+  const { pagesFor } = await import("../../src/lib/routes");
+  for (const path of ["/speisekarte", "/standorte"]) {
+    expect(pagesFor(false).publicPages.some((page) => page.path === path)).toBe(
+      false,
+    );
+    expect(pagesFor(true).publicPages.some((page) => page.path === path)).toBe(
+      true,
+    );
+  }
+});

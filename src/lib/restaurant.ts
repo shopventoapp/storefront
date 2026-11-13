@@ -28,6 +28,7 @@ export type MenuItem = {
   token: string;
   name: string;
   beschreibung_md?: string | null;
+  beschreibung_html?: string | null;
   allergene?: string | null;
   zusatzstoffe?: string | null;
   prices: { label?: string | null; preis: number }[];
@@ -119,6 +120,19 @@ export function dayWindows(
   location: RestaurantLocation,
   date: string,
 ): [string, string][] | null {
+  return serviceWindows(location, date, true);
+}
+
+/** Display today's service through its actual closing time, including overnight hours. */
+export function todayWindows(location: RestaurantLocation, date: string) {
+  return serviceWindows(location, date, false);
+}
+
+function serviceWindows(
+  location: RestaurantLocation,
+  date: string,
+  clip: boolean,
+): [string, string][] | null {
   const own = ownWindows(location, date);
   if (own === null) return null;
   const previous = new Date(`${date}T12:00:00Z`);
@@ -131,7 +145,8 @@ export function dayWindows(
   let windows = [
     ...carry,
     ...own.map(
-      ([start, end]) => [start, Math.min(end, 1440)] as [number, number],
+      ([start, end]) =>
+        [start, clip ? Math.min(end, 1440) : end] as [number, number],
     ),
   ];
 
@@ -139,9 +154,13 @@ export function dayWindows(
     if (!exception.closed_from || !exception.closed_until) continue;
     const start = berlinTimestamp(exception.closed_from),
       end = berlinTimestamp(exception.closed_until);
-    if (start.slice(0, 10) > date || end.slice(0, 10) < date) continue;
-    const low = start.slice(0, 10) < date ? 0 : minutes(start.slice(11));
-    const high = end.slice(0, 10) > date ? 1440 : minutes(end.slice(11));
+    const relativeMinute = (value: string) =>
+      (Date.parse(`${value.slice(0, 10)}T12:00:00Z`) -
+        Date.parse(`${date}T12:00:00Z`)) /
+        60_000 +
+      minutes(value.slice(11));
+    const low = relativeMinute(start);
+    const high = relativeMinute(end);
     windows = windows.flatMap(([a, b]) =>
       high <= a || low >= b
         ? [[a, b]]
@@ -153,7 +172,10 @@ export function dayWindows(
   }
   return windows
     .sort((a, b) => a[0] - b[0])
-    .map(([start, end]) => [time(start), time(end)]);
+    .map(([start, end]) => [
+      time(!clip && start >= 1440 ? start - 1440 : start),
+      time(!clip && end > 1440 ? end - 1440 : end),
+    ]);
 }
 
 export function address(location: RestaurantLocation) {

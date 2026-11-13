@@ -131,11 +131,17 @@ const germanCopy: Record<PagePath, [string, string]> = {
 
 export function pagesFor(platform: boolean) {
   return {
-    publicPages: englishPublicPages.map((page) => ({
-      ...page,
-      title: platform ? germanCopy[page.path][0] : page.title,
-      description: platform ? germanCopy[page.path][1] : page.description,
-    })),
+    publicPages: englishPublicPages
+      .filter(
+        (page) =>
+          platform ||
+          (page.path !== "/speisekarte" && page.path !== "/standorte"),
+      )
+      .map((page) => ({
+        ...page,
+        title: platform ? germanCopy[page.path][0] : page.title,
+        description: platform ? germanCopy[page.path][1] : page.description,
+      })),
     privatePages: englishPrivatePages.map((page) => ({
       ...page,
       title: platform ? germanCopy[page.path][0] : page.title,

@@ -39,7 +39,7 @@ const restaurant: Restaurant = {
           from: "2026-12-31",
           until: "2026-12-31",
           opens: "18:00",
-          closes: "02:00",
+          closes: "23:00",
         },
       ],
     },
@@ -86,6 +86,8 @@ const restaurant: Restaurant = {
               {
                 token: "wine",
                 name: "Riesling",
+                beschreibung_md: "**Trocken**, fruchtig",
+                beschreibung_html: "<p><strong>Trocken</strong>, fruchtig</p>",
                 prices: [{ label: "Glas 0,2 l", preis: 6.5 }],
               },
             ],
@@ -112,7 +114,7 @@ for (const width of [390, 1280])
         "Beispielküche in Hannover",
       );
       await expect(page.locator(".today-hours")).toHaveText(
-        "Heute: 12:00 - 14:30 Uhr · 17:30 - 24:00 Uhr",
+        "Heute: 12:00 - 14:30 Uhr · 17:30 - 01:00 Uhr (Folgetag)",
       );
       await expect(
         page
@@ -135,6 +137,9 @@ for (const width of [390, 1280])
           "true",
         );
         if (title === "menu") {
+          await expect(page.locator(".menu-group strong")).toHaveText(
+            "Trocken",
+          );
           await expect(page).toHaveTitle(/Speisekarte/);
           await expect(
             page.getByRole("heading", { name: "Kürbis-Pasta" }),
@@ -162,7 +167,7 @@ for (const width of [390, 1280])
             page.getByRole("heading", { name: "Gartenküche" }),
           ).toBeVisible();
           await expect(
-            page.getByText("17:30 - 01:00 Uhr (Folgetag)"),
+            page.getByText("17:30 - 01:00 Uhr (Folgetag)", { exact: true }),
           ).toBeVisible();
           await expect(
             page.getByText("Geschlossen · Weihnachten"),
