@@ -10,6 +10,7 @@ import {
   useBranding,
   useDiscovery,
   useLegalLinks,
+  useRestaurant,
 } from "./runtime";
 
 const navigation = [
@@ -22,11 +23,17 @@ export function SiteHeader() {
   const [pathname, setPathname] = useState("");
   useEffect(() => setPathname(window.location.pathname.replace(/\/$/, "")), []);
   const branding = useBranding();
-  const { hasShop, locations, ready } = useDiscovery();
+  const { hasShop, hasEvents, hasVouchers, hasMenu, locations, ready } =
+    useDiscovery();
+  const { data: restaurant } = useRestaurant();
   const links = platformMode
     ? [
-        { label: "Veranstaltungen", href: "/events" },
-        { label: "Gutscheine", href: "/gutscheine" },
+        ...(hasMenu ? [{ label: "Speisekarte", href: "/speisekarte" }] : []),
+        ...(restaurant?.locations.length
+          ? [{ label: "Standorte", href: "/standorte" }]
+          : []),
+        ...(hasEvents ? [{ label: "Veranstaltungen", href: "/events" }] : []),
+        ...(hasVouchers ? [{ label: "Gutscheine", href: "/gutscheine" }] : []),
         ...(locations.some((location) => location.table_reservations_enabled)
           ? [{ label: "Tisch reservieren", href: "/reservierung" }]
           : []),
@@ -127,7 +134,9 @@ function Icon({ kind }: { kind: "person" | "bag" }) {
 export function SiteFooter() {
   const branding = useBranding();
   const legal = useLegalLinks();
-  const { locations } = useDiscovery();
+  const { locations, hasMenu, hasEvents, hasVouchers, hasShop } =
+    useDiscovery();
+  const { data: restaurant } = useRestaurant();
   const reserve =
     !platformMode ||
     locations.some((location) => location.table_reservations_enabled);
@@ -149,6 +158,15 @@ export function SiteFooter() {
         </div>
         <div className="footer-links">
           <nav aria-label={platformMode ? "Weitere Links" : "More to explore"}>
+            {platformMode && hasMenu && <a href="/speisekarte">Speisekarte</a>}
+            {platformMode && !!restaurant?.locations.length && (
+              <a href="/standorte">Standorte</a>
+            )}
+            {platformMode && hasEvents && <a href="/events">Veranstaltungen</a>}
+            {platformMode && hasVouchers && (
+              <a href="/gutscheine">Gutscheine</a>
+            )}
+            {platformMode && hasShop && <a href="/shop">Shop</a>}
             {reserve && (
               <a href="/reservierung">
                 {platformMode ? "Tisch reservieren" : "Reservations"}

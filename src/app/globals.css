@@ -554,3 +554,126 @@ p + p {
   font-size: 1.5rem;
   margin-block: 20px 12px;
 }
+
+/* Restaurant pages share the storefront's open rows and compact mobile spacing. */
+.restaurant-page {
+  padding-block: 40px 64px;
+  max-width: 1100px;
+}
+.restaurant-page h1 {
+  margin-bottom: 16px;
+}
+.restaurant-copy {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.menu-group,
+.restaurant-location {
+  margin-top: 32px;
+}
+.menu-group h2,
+.restaurant-location h2 {
+  margin-bottom: 16px;
+}
+.menu-group h3 {
+  margin-block: 20px 8px;
+}
+.menu-items,
+.opening-exceptions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.menu-items > li {
+  padding-block: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.menu-item-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.menu-item-heading .menu-item-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.15rem;
+  margin: 0;
+}
+.menu-prices {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.price-label {
+  font-weight: 400;
+}
+.menu-items p {
+  margin: 6px 0 0;
+}
+.menu-hints {
+  font-size: 0.9rem;
+  color: var(--sv-text-2);
+}
+.location-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+.location-columns h3 {
+  font-size: 1.15rem;
+  margin: 0 0 12px;
+}
+.opening-hours {
+  margin: 12px 0;
+}
+.opening-hours > div {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  padding-block: 5px;
+}
+.opening-hours dd {
+  margin: 0;
+}
+.opening-exceptions span,
+.opening-hours dd span {
+  display: block;
+}
+.opening-exceptions li {
+  margin-block: 8px;
+}
+.today-hours {
+  font-size: 1rem;
+}
+@media (max-width: 800px) {
+  .restaurant-page {
+    padding-block: 24px 40px;
+  }
+  .location-columns {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .menu-group,
+  .restaurant-location {
+    margin-top: 24px;
+  }
+  .menu-items > li {
+    padding-block: 12px;
+  }
+  .menu-item-heading {
+    gap: 10px;
+  }
+  .menu-item-heading .menu-item-title {
+    font-size: 1rem;
+  }
+  .menu-prices {
+    font-size: 0.95rem;
+    max-width: 50%;
+  }
+  .gastro-actions {
+    gap: 12px 20px;
+  }
+}

@@ -4,6 +4,16 @@ export const demoName = platformMode ? "Willkommen bei uns" : "Nebenan Atelier";
 
 const englishPublicPages = [
   {
+    path: "/speisekarte",
+    title: "Menu",
+    description: "Discover our food, drinks and prices.",
+  },
+  {
+    path: "/standorte",
+    title: "Locations",
+    description: "Find our locations, opening hours and directions.",
+  },
+  {
     path: "/",
     title: "Time for new discoveries",
     description:
@@ -79,6 +89,14 @@ type PagePath =
   | (typeof englishPublicPages)[number]["path"]
   | (typeof englishPrivatePages)[number]["path"];
 const germanCopy: Record<PagePath, [string, string]> = {
+  "/speisekarte": [
+    "Speisekarte",
+    "Entdecke unsere Speisen, Getränke und Preise mit Hinweisen zu Allergenen und Zusatzstoffen.",
+  ],
+  "/standorte": [
+    "Standorte",
+    "Hier findest Du unsere Adressen, Öffnungszeiten und Hinweise zur Anfahrt.",
+  ],
   "/": [
     "Willkommen bei uns",
     "Entdecke kommende Veranstaltungen und verschenke Gutscheine.",
