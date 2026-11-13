@@ -4,6 +4,8 @@ import { instanceOrigin } from "@shopvento/ui/proxy";
 type PolicyEnv = Partial<CloudflareEnv> & { SHOPVENTO_API_URL?: string };
 export interface EmbedPolicy {
   enabled: boolean;
+  analytics_events_enabled?: boolean;
+  preview_origin?: string;
   canonical_origin: string;
   allowed_origins: string[];
   revision: string;
@@ -32,6 +34,7 @@ function parse(value: unknown): EmbedPolicy | null {
   const p = value as Partial<EmbedPolicy>;
   return typeof p.enabled === "boolean" &&
     origin(p.canonical_origin) &&
+    (p.preview_origin === undefined || origin(p.preview_origin)) &&
     Array.isArray(p.allowed_origins) &&
     p.allowed_origins.length <= 20 &&
     p.allowed_origins.every(origin) &&
@@ -101,7 +104,7 @@ export function createEmbedPolicyFetcher(
 export function embedHeaders(policy: EmbedPolicy | null): Headers {
   const headers = new Headers({
     "Content-Security-Policy": policy?.enabled
-      ? `frame-ancestors ${[policy.canonical_origin, ...policy.allowed_origins].join(" ")}`
+      ? `frame-ancestors ${[policy.canonical_origin, ...policy.allowed_origins, ...(policy.preview_origin ? [policy.preview_origin] : [])].join(" ")}`
       : "frame-ancestors 'none'",
     "Cache-Control": "no-store",
     "CDN-Cache-Control": "no-store",

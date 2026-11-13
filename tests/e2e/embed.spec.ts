@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { mockShop, timewindow } from "../fixtures/shop";
+import { mockShop, settings, timewindow } from "../fixtures/shop";
 
 let server: ChildProcess;
 let localOrigin: string;
@@ -69,6 +69,9 @@ for (const width of [390, 1280])
       );
       await page.goto("https://restaurant.example/");
       const frame = page.frameLocator("iframe");
+      await frame
+        .getByRole("button", { name: "Veranstaltung buchen", exact: true })
+        .click();
       await expect(
         frame.getByRole("heading", { name: "Veranstaltung buchen" }),
       ).toBeVisible();
@@ -105,6 +108,9 @@ for (const width of [390, 1280])
         });
       }
       const response = await page.goto(url);
+      await page
+        .getByRole("button", { name: "Veranstaltung buchen", exact: true })
+        .click();
       expect(response?.headers()["content-security-policy"]).toBe(
         "frame-ancestors https://storefront.example https://restaurant.example",
       );
@@ -149,8 +155,18 @@ test("unknown location and service stay calm, other routes deny frames, internal
     "location=-1",
   ]) {
     await page.goto(`${origin}/embed/booking?${query}`);
+    if (
+      query === "location=999&service=both" ||
+      query === "location=1&service=table"
+    )
+      await page
+        .getByRole("button", { name: "Tisch reservieren", exact: true })
+        .click();
     await expect(
-      page.getByRole("heading", { name: "Aktuell keine Buchung möglich" }),
+      page
+        .getByRole("status")
+        .filter({ hasText: /nicht verfügbar|keine Buchung möglich/ })
+        .first(),
     ).toBeVisible();
   }
   const other = await request.get(`${localOrigin}/events`);
@@ -203,6 +219,10 @@ for (const width of [390, 1280])
         }),
       );
       await page.goto("https://restaurant.example/");
+      await page
+        .frameLocator("iframe")
+        .getByRole("button", { name: "Tisch reservieren", exact: true })
+        .click();
       const form = page.frameLocator("iframe").locator("form.sv-reservation");
       for (const name of ["AGB", "Datenschutzerklärung"]) {
         await expect(
@@ -312,6 +332,9 @@ for (const width of [390, 1280])
       );
       await page.goto("https://restaurant.example/");
       const frame = page.frameLocator("iframe");
+      await frame
+        .getByRole("button", { name: "Veranstaltung buchen", exact: true })
+        .click();
       await frame.getByRole("button", { name: /Herb workshop/ }).click();
       const form = frame.locator("form.sv-booking");
       await expect(form).toBeVisible();
@@ -344,8 +367,12 @@ for (const width of [390, 1280])
       expect(submitted).toBe(true);
       expect(page.frames()[1].url()).toBe(url);
       await popup.getByRole("link", { name: "Return to booking" }).click();
+      // The top-level return uses the storefront language, unlike the German embed.
       await expect(
-        popup.getByRole("heading", { name: "Deine Buchung", exact: true }),
+        popup.getByRole("heading", {
+          name: /^(Deine Buchung|Your booking)$/,
+          exact: true,
+        }),
       ).toBeVisible();
       expect(popup.mainFrame().parentFrame()).toBeNull();
     });
@@ -356,9 +383,602 @@ test("embed explains unavailable online payments", async ({ page }) => {
     route.fulfill({ json: { online_payments_enabled: false } }),
   );
   await page.goto(`${origin}/embed/booking?location=1&service=tasting`);
+  await page
+    .getByRole("button", { name: "Veranstaltung buchen", exact: true })
+    .click();
   await expect(
     page.getByText(
       "Kartenzahlung ist bald verfügbar. Du kannst weiterhin Gutscheine einlösen.",
     ),
   ).toBeVisible();
+});
+
+for (const width of [390, 1280])
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`loader ${width} ${colorScheme}: popup focus, malformed messages and consent`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.emulateMedia({ colorScheme });
+      await mockShop(page);
+      await page.route("https://restaurant.example/**", (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body: `<a href="${origin}/embed/booking?location=1&service=all" data-shopvento="popup">Jetzt buchen</a><script src="${origin}/embed/loader.js" defer></script>`,
+        }),
+      );
+      await page.goto("https://restaurant.example/");
+      await page.getByRole("link", { name: "Jetzt buchen" }).click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      const frame = page.frameLocator("iframe");
+      await expect(
+        frame.getByRole("button", { name: "Gutschein kaufen" }),
+      ).toBeVisible();
+      await expect
+        .poll(() => page.locator("iframe").getAttribute("height"))
+        .not.toBe("720");
+      const child = page.frames().find((f) => f.url().startsWith(origin));
+      if (!child) throw new Error("Missing booking frame");
+      const height = await page.locator("iframe").getAttribute("height");
+      await page.evaluate(() => {
+        const iframe = document.querySelector("iframe");
+        if (!iframe) throw new Error("Missing frame");
+        const data = {
+          namespace: "shopvento.booking",
+          version: 1,
+          instanceId: iframe.name,
+          event: "resize",
+          height: 3999,
+        };
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            origin: "https://storefront.example",
+            source: window,
+            data,
+          }),
+        );
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            origin: "https://evil.example",
+            source: iframe.contentWindow,
+            data,
+          }),
+        );
+        for (const value of [
+          null,
+          [],
+          "malformed",
+          { ...data, version: 2 },
+          { ...data, instanceId: "unknown" },
+        ])
+          window.dispatchEvent(
+            new MessageEvent("message", {
+              origin: "https://storefront.example",
+              source: iframe.contentWindow,
+              data: value,
+            }),
+          );
+      });
+      expect(await page.locator("iframe").getAttribute("height")).toBe(height);
+      await child.evaluate(() => {
+        const base = {
+          namespace: "shopvento.booking",
+          version: 1,
+          instanceId: window.name,
+        };
+        window.parent.postMessage(
+          { ...base, event: "ready", analytics: true },
+          "https://restaurant.example",
+        );
+        window.parent.postMessage(
+          {
+            ...base,
+            event: "booking_confirmed",
+            service: "table",
+            eventId: "before-consent",
+          },
+          "https://restaurant.example",
+        );
+        window.parent.postMessage(
+          { ...base, event: "resize", height: "999999" },
+          "https://restaurant.example",
+        );
+      });
+      expect(
+        await page.evaluate(
+          () =>
+            (window as unknown as { dataLayer?: unknown[] }).dataLayer || [],
+        ),
+      ).toEqual([]);
+      await page.evaluate(() =>
+        (
+          window as unknown as {
+            ShopventoBooking: { setConsent(v: boolean): void };
+          }
+        ).ShopventoBooking.setConsent(true),
+      );
+      await child.evaluate(() => {
+        const base = {
+          namespace: "shopvento.booking",
+          version: 1,
+          instanceId: window.name,
+          event: "booking_confirmed",
+          service: "table",
+          eventId: "confirmed",
+        };
+        window.parent.postMessage(
+          { ...base, email: "must-not-leak" },
+          "https://restaurant.example",
+        );
+        window.parent.postMessage(base, "https://restaurant.example");
+        window.parent.postMessage(
+          { ...base, eventId: "invalid", service: "secret" },
+          "https://restaurant.example",
+        );
+      });
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => (window as unknown as { dataLayer: unknown[] }).dataLayer,
+          ),
+        )
+        .toEqual([{ event: "shopvento_booking_confirmed", service: "table" }]);
+      await page.evaluate(() =>
+        (
+          window as unknown as {
+            ShopventoBooking: { setConsent(v: boolean): void };
+          }
+        ).ShopventoBooking.setConsent(false),
+      );
+      await child.evaluate(() =>
+        window.parent.postMessage(
+          {
+            namespace: "shopvento.booking",
+            version: 1,
+            instanceId: window.name,
+            event: "booking_confirmed",
+            service: "table",
+            eventId: "after-withdrawal",
+          },
+          "https://restaurant.example",
+        ),
+      );
+      await frame
+        .getByRole("button", { name: "Tisch reservieren", exact: true })
+        .focus();
+      await page.keyboard.press("Escape");
+      await expect(dialog).not.toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "Jetzt buchen" }),
+      ).toBeFocused();
+      expect(
+        await page.evaluate(
+          () =>
+            (window as unknown as { dataLayer: unknown[] }).dataLayer.length,
+        ),
+      ).toBe(1);
+    });
+  }
+
+test("voucher service keeps catalogue and cart inside the embed without login", async ({
+  page,
+  context,
+}) => {
+  await mockShop(page);
+  await page.route("**/api/shop/settings", (route) =>
+    route.fulfill({
+      json: { ...settings, shop_checkout_review_required: true },
+    }),
+  );
+  await page.route("https://challenges.cloudflare.com/**", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: "window.turnstile={render:(_,o)=>{queueMicrotask(()=>o.callback('synthetic'));return 'w';},remove:()=>{},reset:()=>{}}",
+    }),
+  );
+  await page.route("**/api/shop/checkout/create-checkout-session", (route) => {
+    expect(route.request().headers().cookie).toBeUndefined();
+    expect(route.request().postDataJSON().turnstile_token).toBe("synthetic");
+    return route.fulfill({
+      json: {
+        status: "payment_required",
+        order_id: "synthetic",
+        checkout_url: "https://checkout.stripe.com/c/pay/voucher",
+      },
+    });
+  });
+  await context.route("https://checkout.stripe.com/**", (route) =>
+    route.fulfill({ contentType: "text/html", body: "<h1>Payment step</h1>" }),
+  );
+  await page.goto(`${origin}/embed/booking?location=1&service=voucher`);
+  await page
+    .getByRole("button", { name: "Gutschein kaufen", exact: true })
+    .click();
+  await expect(
+    page.getByText("Give time together", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.getByText("Herb kit", { exact: true })).toHaveCount(0);
+  await page
+    .locator('a[href*="/shop/gutscheine/zeit-gutschein"]')
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: /In den Warenkorb/ })
+    .first()
+    .click();
+  await page.locator('a[href="/warenkorb"]').first().click();
+  await expect(
+    page.getByText("Give time together", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Zur Kasse/ }).first(),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: /Zur Kasse/ })
+    .first()
+    .click();
+  await expect(page.locator("#email")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Als Gast fortfahren" }),
+  ).toHaveCount(0);
+  for (const name of ["AGB", "Widerruf", "Datenschutz"]) {
+    const legal = page
+      .locator('section[aria-label="Gutschein kaufen"]')
+      .getByRole("link", { name, exact: false })
+      .first();
+    const opened = context.waitForEvent("page");
+    await legal.click();
+    const tab = await opened;
+    await expect(tab).toHaveURL(
+      new RegExp(
+        name === "AGB"
+          ? "/agb"
+          : name === "Widerruf"
+            ? "/widerruf"
+            : "/datenschutz",
+      ),
+    );
+    await expect(
+      page.getByRole("link", { name: "Weiter zur Zahlung", exact: true }),
+    ).toHaveCount(0);
+    await tab.close();
+  }
+  await page.locator("#first_name").fill("Demo");
+  await page.locator("#last_name").fill("Guest");
+  await page.locator("#email").fill("demo@example.org");
+  await page.locator("#terms").check();
+  const popupPromise = context.waitForEvent("page");
+  await page
+    .getByRole("button", { name: "Zahlungspflichtig bestellen", exact: true })
+    .click();
+  const popup = await popupPromise;
+  await expect(popup).toHaveURL("https://checkout.stripe.com/c/pay/voucher");
+  expect(popup.mainFrame().parentFrame()).toBeNull();
+  expect(new URL(page.url()).pathname).toBe("/embed/booking");
+});
+
+for (const width of [390, 1280])
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`private inquiry ${width} ${colorScheme} is guest-only and remains pending`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.emulateMedia({ colorScheme });
+      await mockShop(page);
+      await page.route("https://challenges.cloudflare.com/**", (route) =>
+        route.fulfill({
+          contentType: "application/javascript",
+          body: "window.turnstile={render:(_,o)=>{queueMicrotask(()=>o.callback('synthetic'));return 'w';},remove:()=>{}}",
+        }),
+      );
+      let requests = 0;
+      await page.route("**/api/shop/private-event-requests", async (route) => {
+        requests++;
+        expect(route.request().headers().cookie).toBeUndefined();
+        expect(route.request().postDataJSON()).toMatchObject({
+          franchise_location_id: 1,
+          guests_provisional: 20,
+          terms_privacy_accepted: true,
+          turnstile_token: "synthetic",
+        });
+        await route.fulfill({
+          status: 201,
+          json: {
+            status: "inquiry",
+            message:
+              "Deine Anfrage ist eingegangen. Es wurde noch nichts gebucht.",
+          },
+        });
+      });
+      await page.goto(`${origin}/embed/booking?location=1&service=private`);
+      await page
+        .getByRole("button", {
+          name: "Private Veranstaltung anfragen",
+          exact: true,
+        })
+        .click();
+      const form = page.locator("form.sv-booking");
+      for (const [name, value] of Object.entries({
+        title: "Feier",
+        contact_name: "Test Guest",
+        contact_email: "guest@example.org",
+        date: "2027-01-04",
+        start_time: "18:00",
+        end_time: "22:00",
+        guests_provisional: "20",
+      }))
+        await form.locator(`[name="${name}"]`).fill(value);
+      await form.getByRole("checkbox").check();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      if (process.env.WIDGET_EVIDENCE_DIR)
+        await page.screenshot({
+          path: join(
+            process.env.WIDGET_EVIDENCE_DIR,
+            `private-${width}-${colorScheme}.png`,
+          ),
+          fullPage: true,
+        });
+      await form.getByRole("button", { name: /Anfrage senden/ }).click();
+      await expect(page.getByRole("status")).toContainText(
+        "noch nichts gebucht",
+      );
+      expect(requests).toBe(1);
+      await expect(
+        page.getByRole("link", { name: "Anmelden" }),
+      ).toHaveAttribute("target", "_blank");
+    });
+  }
+
+test("owner analytics opt-out reaches an open widget within a minute", async ({
+  page,
+}) => {
+  await mockShop(page);
+  let permitted = true;
+  await page.clock.install();
+  await page.route(`${origin}/embed/config`, (route) =>
+    route.fulfill({
+      json: {
+        allowed_origins: ["https://restaurant.example"],
+        analytics: permitted,
+      },
+    }),
+  );
+  await page.route("https://restaurant.example/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: `<a href="${origin}/embed/booking?location=1&service=all" data-shopvento="inline">Buchen</a><script src="${origin}/embed/loader.js" defer></script>`,
+    }),
+  );
+  await page.goto("https://restaurant.example/");
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("button", { name: "Gutschein kaufen" }),
+  ).toBeVisible();
+  await page.clock.runFor(1000);
+  await page.evaluate(() =>
+    (
+      window as unknown as {
+        ShopventoBooking: { setConsent(v: boolean): void };
+      }
+    ).ShopventoBooking.setConsent(true),
+  );
+  const child = page.frames().find((frame) => frame.url().startsWith(origin));
+  if (!child) throw new Error("Missing booking frame");
+  const emit = () =>
+    child.evaluate(() =>
+      window.dispatchEvent(
+        new CustomEvent("shopvento:embed", {
+          detail: { event: "booking_confirmed", service: "table" },
+        }),
+      ),
+    );
+  await emit();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { dataLayer?: unknown[] }).dataLayer?.length,
+      ),
+    )
+    .toBe(1);
+  permitted = false;
+  const refresh = page.waitForResponse(`${origin}/embed/config`);
+  await page.clock.fastForward(60001);
+  await refresh;
+  await page.clock.runFor(200);
+  await emit();
+  await page.clock.runFor(200);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { dataLayer: unknown[] }).dataLayer.length,
+    ),
+  ).toBe(1);
+});
+
+for (const service of ["all", "voucher"]) {
+  test(`disabled guest checkout hides voucher entry for ${service}`, async ({
+    page,
+  }) => {
+    await mockShop(page);
+    await page.route("**/api/shop/settings", (route) =>
+      route.fulfill({
+        json: { ...settings, guest_shop_checkout_enabled: false },
+      }),
+    );
+    await page.goto(`${origin}/embed/booking?location=1&service=${service}`);
+    await expect(
+      page.getByText(
+        service === "all"
+          ? "Wähle Dein Angebot, um zu starten."
+          : "Dieses Angebot ist gerade nicht verfügbar.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Gutschein kaufen", exact: true }),
+    ).toHaveCount(0);
+  });
+}
+
+for (const address of ["du", "sie"]) {
+  for (const status of [0, 200, 400, 422, 429, 503]) {
+    test(`inquiry errors ${address} ${status} preserve address and retry semantics`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 1000 });
+      await page.emulateMedia({
+        colorScheme: address === "sie" ? "dark" : "light",
+      });
+      await mockShop(page);
+      await page.route("**/api/shop/settings", (route) =>
+        route.fulfill({ json: { ...settings, guest_address: address } }),
+      );
+      await page.route("https://challenges.cloudflare.com/**", (route) =>
+        route.fulfill({
+          contentType: "application/javascript",
+          body: "window.turnstile={render:(_,o)=>{queueMicrotask(()=>o.callback('synthetic'));return 'w';},remove:()=>{},reset:()=>{}}",
+        }),
+      );
+      const reason =
+        address === "sie"
+          ? "Bitte wählen Sie einen zukünftigen Termin."
+          : "Bitte wähle einen zukünftigen Termin.";
+      await page.route("**/api/shop/private-event-requests", (route) =>
+        status === 0
+          ? route.abort("failed")
+          : route.fulfill({
+              status,
+              json: status === 422 ? { detail: reason } : {},
+            }),
+      );
+      await page.goto(`${origin}/embed/booking?location=1&service=private`);
+      await expect(
+        page.getByText(
+          address === "sie"
+            ? "Wählen Sie Ihr Angebot, um zu starten."
+            : "Wähle Dein Angebot, um zu starten.",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await page
+        .getByRole("button", {
+          name: "Private Veranstaltung anfragen",
+          exact: true,
+        })
+        .click();
+      const form = page.locator("form.sv-booking");
+      await expect(
+        form.getByText(address === "sie" ? "Ihr Name" : "Dein Name", {
+          exact: true,
+        }),
+      ).toBeVisible();
+      for (const [name, value] of Object.entries({
+        title: "Feier",
+        contact_name: "Test Guest",
+        contact_email: "guest@example.org",
+        date: "2027-01-04",
+        start_time: "18:00",
+        end_time: "22:00",
+        guests_provisional: "20",
+      }))
+        await form.locator(`[name="${name}"]`).fill(value);
+      await form.getByRole("checkbox").check();
+      await form.getByRole("button", { name: /Anfrage senden/ }).click();
+      await expect(form.getByRole("alert")).toHaveText(
+        status === 422
+          ? reason
+          : status === 429
+            ? address === "sie"
+              ? "Bitte warten Sie einen Moment, bevor Sie es erneut versuchen."
+              : "Bitte warte einen Moment, bevor Du es erneut versuchst."
+            : status === 400
+              ? address === "sie"
+                ? "Ihre Anfrage konnte nicht verarbeitet werden. Bitte prüfen Sie Ihre Angaben."
+                : "Deine Anfrage konnte nicht verarbeitet werden. Bitte prüfe Deine Angaben."
+              : address === "sie"
+                ? "Das Ergebnis ist unklar. Bitte fragen Sie beim Standort nach, bevor Sie erneut anfragen."
+                : "Das Ergebnis ist unklar. Bitte frage beim Standort nach, bevor Du erneut anfragst.",
+      );
+      if (process.env.WIDGET_EVIDENCE_DIR && status === 503)
+        await page.screenshot({
+          path: join(
+            process.env.WIDGET_EVIDENCE_DIR,
+            `inquiry-error-${address}-390.png`,
+          ),
+          fullPage: true,
+        });
+      if (status >= 400 && status < 500)
+        await expect(
+          form.getByRole("button", { name: /Anfrage senden/ }),
+        ).toBeEnabled();
+      else
+        await expect(
+          form.getByRole("button", { name: /Anfrage senden/ }),
+        ).toBeDisabled();
+    });
+  }
+}
+
+test("analytics off sends no booking events to the host", async ({ page }) => {
+  await mockShop(page);
+  await page.route(`${origin}/embed/config`, (route) =>
+    route.fulfill({
+      json: {
+        allowed_origins: ["https://restaurant.example"],
+        analytics: false,
+      },
+    }),
+  );
+  await page.route("https://restaurant.example/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: `<script>window.received=[];addEventListener('message', e=>window.received.push(e.data.event))</script><a href="${origin}/embed/booking?location=1&service=all" data-shopvento="inline">Buchen</a><script src="${origin}/embed/loader.js" defer></script>`,
+    }),
+  );
+  await page.goto("https://restaurant.example/");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { received: string[] }).received.includes(
+          "resize",
+        ),
+      ),
+    )
+    .toBe(true);
+  await page
+    .frameLocator("iframe")
+    .getByRole("button", { name: "Gutschein kaufen", exact: true })
+    .click();
+  const child = page.frames().find((frame) => frame.url().startsWith(origin));
+  if (!child) throw new Error("Missing frame");
+  await child.evaluate(() => {
+    window.dispatchEvent(
+      new CustomEvent("shopvento:embed", {
+        detail: { event: "booking_confirmed", service: "private" },
+      }),
+    );
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { received: string[] }).received.includes(
+          "close_requested",
+        ),
+      ),
+    )
+    .toBe(true);
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as { received: string[] }).received.filter((event) =>
+        event?.startsWith("booking_"),
+      ),
+    ),
+  ).toEqual([]);
 });

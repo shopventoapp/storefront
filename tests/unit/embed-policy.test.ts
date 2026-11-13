@@ -142,3 +142,26 @@ describe("server-only embed policy", () => {
     }
   });
 });
+
+test("trusted owner preview is separate from the tenant website allowlist", async () => {
+  const preview = { ...policy, preview_origin: "https://a.shopvento.cloud" };
+  const get = createEmbedPolicyFetcher(
+    fetcher(async () => Response.json(preview)),
+  );
+  const value = await get(request, env);
+  expect(value?.allowed_origins).toEqual(policy.allowed_origins);
+  expect(embedHeaders(value).get("Content-Security-Policy")).toContain(
+    "https://a.shopvento.cloud",
+  );
+  const invalid = createEmbedPolicyFetcher(
+    fetcher(async () =>
+      Response.json({
+        ...preview,
+        preview_origin: "https://a.example; script-src *",
+      }),
+    ),
+  );
+  expect(await invalid(request, env)).toBeNull();
+  expect(isShopProxyPath("/api/shop/private-event-requests")).toBe(true);
+  expect(isShopProxyPath("/api/backoffice/private-events")).toBe(false);
+});

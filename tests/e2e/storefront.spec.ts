@@ -58,7 +58,7 @@ test("inactive card payments show availability without blocking voucher browsing
   for (const path of ["/shop", "/events?event=1"]) {
     await page.goto(path);
     await expect(
-      page.getByText("Bald verfügbar", { exact: true }),
+      page.getByRole("status").filter({ hasText: "Card payments:" }),
     ).toBeVisible();
   }
   await page.goto("/gutscheine");

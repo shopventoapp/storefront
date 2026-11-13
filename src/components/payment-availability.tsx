@@ -1,14 +1,16 @@
 import type { PublicPaymentStatus } from "@/lib/payment-status";
-import { platformMode } from "@/lib/platform";
+import { uiLocale } from "@/lib/platform";
 export function PaymentAvailabilityNotice({
   status,
+  locale = uiLocale,
 }: {
   status: PublicPaymentStatus | null;
+  locale?: "de" | "en-GB";
 }) {
   if (status?.online_payments_enabled !== false) return null;
   return (
     <p className="state" role="status">
-      {platformMode ? (
+      {locale === "de" ? (
         "Kartenzahlung ist bald verfügbar. Du kannst weiterhin Gutscheine einlösen."
       ) : (
         <>
