@@ -676,6 +676,7 @@ p + p {
   .gastro-actions {
     gap: 12px 20px;
   }
+}
 
 .embed-booking nav[aria-label="Angebot auswählen"] {
   display: flex;
